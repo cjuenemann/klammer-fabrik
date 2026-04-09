@@ -217,7 +217,7 @@ const RECIPES = {
   manualGenerator: {
     id: 'manualGenerator', name: 'Handkurbel-Generator', tier: 1,
     desc: 'Erzeugt Strom durch manuelle Arbeit (Klicken)',
-    phase: 1, unlockResearch: null, buildCost: 50,
+    phase: 1, unlockResearch: null, buildCost: 20,
     inputs: {}, outputs: { powerGrid: 50 }, // 50W output
     outputCapacity: { powerGrid: 150 },
     isGenerator: true,
