@@ -1624,7 +1624,8 @@ const UI = (() => {
             <input type="number" id="sell-qty-${id}" min="1" max="${maxQty}" value="${halfQty}" style="width:55px;padding:2px 4px;font-size:.75rem;text-align:center">
             <button class="btn btn-sm" style="padding:2px 6px;min-width:24px" onclick="adjustSellQty('${id}', 1)">+1</button>
             <button class="btn btn-sm" style="padding:2px 6px;min-width:28px" onclick="adjustSellQty('${id}', 5)">+5</button>
-            <span style="font-size:.65rem;color:var(--accent-green)">${fmtMoney(halfQty * price)}</span>
+            <span style="font-size:.65rem;color:#888">@ ${fmtMoney(price)}</span>
+            <span id="sell-total-${id}" style="font-size:.65rem;color:var(--accent-green);min-width:60px">= ${fmtMoney(halfQty * price)}</span>
             <button class="btn btn-sm btn-amber" data-action="cli-sell-custom" data-resource="${id}">Verkauf</button>
           </div>
         `;
@@ -1642,14 +1643,12 @@ const UI = (() => {
     let val = parseInt(input.value) || 0;
     val = Math.max(1, Math.min(max, val + delta));
     input.value = val;
-    // Trigger price recalc
-    const row = input.closest('div');
-    const priceSpan = row?.querySelector('span:last-of-type');
-    if (priceSpan) {
+    // Update total price display
+    const totalSpan = document.getElementById(`sell-total-${id}`);
+    if (totalSpan) {
       const qty = parseInt(input.value) || 0;
-      const resourceId = id;
-      const price = STATE.market?.prices[resourceId] || RESOURCE_META[resourceId]?.basePrice || 0.1;
-      priceSpan.textContent = fmtMoney(qty * price);
+      const price = STATE.market?.prices[id] || RESOURCE_META[id]?.basePrice || 0.1;
+      totalSpan.textContent = `= ${fmtMoney(qty * price)}`;
     }
   }
 
