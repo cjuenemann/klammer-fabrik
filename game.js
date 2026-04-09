@@ -120,6 +120,7 @@ function actionRemoveMachine(machineId) {
 
 function actionManualFeed(machineId, resource, qty) {
   const stack = getMachineStack(machineId);
+  console.log('Feed:', machineId, resource, qty, 'Warehouse:', STATE.production.warehouse);
   let totalMoved = 0;
   let remaining = qty;
   for (const m of stack) {
@@ -129,6 +130,7 @@ function actionManualFeed(machineId, resource, qty) {
     remaining -= moved;
   }
   if (totalMoved <= 0) showNotif('Lager leer oder Buffer voll', 'warn');
+  else showNotif(`${totalMoved} ${resource} zugeführt`);
 }
 
 function actionManualCollect(machineId) {
