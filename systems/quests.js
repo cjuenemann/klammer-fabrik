@@ -33,13 +33,6 @@ const Quests = (() => {
       reward: null,
     },
     {
-      id: 'q_verkauf_geld',
-      name: '💰 Verdiene Geld!',
-      desc: 'Verkaufe Klammern auf dem Markt (€0.25/Stk). Klicke auf eine Klammer im Lager und setze einen Preis.',
-      check: (state) => state.money >= 350,
-      reward: null,
-    },
-    {
       id: 'q_stanzen',
       name: '🔨 Baue die Stanzpresse',
       desc: 'Baue eine Stanzpresse, um Draht zu Rohlingen zu verarbeiten.',
@@ -51,6 +44,13 @@ const Quests = (() => {
       name: '🔬 Baue den Qualitätstisch',
       desc: 'Baue einen Qualitätstisch, um Rohlinge zu Klammern zu verarbeiten.',
       check: (state) => state.production?.machines?.some(m => m.recipeId === 'qcStation'),
+      reward: null,
+    },
+    {
+      id: 'q_verkauf_geld',
+      name: '💰 Erste Klammern verkaufen',
+      desc: 'Verkaufe mindestens 10 Klammern. Klicke im Lager auf "clip" und setze einen Preis.',
+      check: (state) => (state.totalClipsSold || 0) >= 10,
       reward: null,
     },
     {
