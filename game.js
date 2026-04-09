@@ -143,7 +143,10 @@ function actionManualCollect(machineId) {
     if (Object.keys(collected).length > 0) anyCollected = true;
   }
   if (!anyCollected) showNotif('Output-Buffer ist leer', 'warn');
-  else UI.renderProduction(STATE);
+  else {
+    UI.renderProduction(STATE);
+    saveGame();
+  }
 }
 
 function actionBuyResource(resource, qty) {
@@ -168,6 +171,7 @@ function actionSell(resource) {
     const meta = RESOURCE_META[resource];
     showNotif(`${result.sold}× ${meta.name} für ${fmtMoney(result.earned)} verkauft`);
     UI.renderWarehouse(STATE);
+    saveGame();
   } else {
     showNotif(result.reason, 'error');
   }
