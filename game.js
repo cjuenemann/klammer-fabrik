@@ -151,12 +151,6 @@ function actionManualCollect(machineId) {
     saveGame();
   }
 }
-  if (!anyCollected) showNotif('Output-Buffer ist leer', 'warn');
-  else {
-    UI.renderProduction(STATE);
-    saveGame();
-  }
-}
 
 function actionBuyResource(resource, qty) {
   const result = Market.buyResource(STATE, resource, qty);
