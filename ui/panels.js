@@ -4,6 +4,7 @@
 const UI = (() => {
 
   let _lastFrame = 0;
+  let _gAnim = null;
 
   function build(state) {
     wireStaticEvents();
@@ -570,19 +571,22 @@ const UI = (() => {
     for (const [id, recipe] of Object.entries(RECIPES)) {
       if (recipe.phase > state.phase) continue;
       if (recipe.unlockResearch && !state.upgrades?.[recipe.unlockResearch]) continue;
-      const tier = recipe.tier || 1;
-      if (!grouped[tier]) grouped[tier] = [];
-      grouped[tier].push({ id, recipe });
+      const key = recipe.category || `Tier ${recipe.tier || 1}`;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push({ id, recipe });
     }
 
     let html = '';
-    for (const [tier, items] of Object.entries(grouped).sort()) {
-      html += `<div class="section-divider">Tier ${tier}</div>`;
+    for (const [cat, items] of Object.entries(grouped).sort()) {
+      html += `<div class="section-divider">${cat}</div>`;
       for (const { id, recipe } of items) {
         const can = state.money >= recipe.buildCost;
         const ioStr = Object.entries(recipe.inputs).map(([r,n])=>`${n}× ${RESOURCE_META[r]?.name||r}`).join(', ')
           + ' → '
           + Object.entries(recipe.outputs).map(([r,n])=>`${n}× ${RESOURCE_META[r]?.name||r}`).join(', ');
+        const stats = recipe.isMarketplace ? 'Handel' : 
+                      recipe.isGenerator ? recipe.outputs.powerGrid+'W Gen' : 
+                      (recipe.cyclesPerSec || 0)+'/s';
         html += `<div class="item-card">
           <div class="item-card-header">
             <span class="item-card-name">${recipe.name}</span>
@@ -591,9 +595,9 @@ const UI = (() => {
             </button>
           </div>
           <div class="item-card-desc">${recipe.desc}</div>
-          <div class="item-card-desc text-mono" style="margin-top:2px;font-size:.68rem;color:var(--text-muted)">${ioStr}</div>
+          ${!recipe.isMarketplace ? `<div class="item-card-desc text-mono" style="margin-top:2px;font-size:.68rem;color:var(--text-muted)">${ioStr}</div>` : ''}
           <div class="item-card-cost ${can?'affordable':''}">
-            ${fmtMoney(recipe.buildCost)} · ${recipe.isGenerator ? recipe.outputs.powerGrid+'W Gen' : recipe.cyclesPerSec+'/s Basis'}
+            ${fmtMoney(recipe.buildCost)} · ${stats}
           </div>
         </div>`;
       }
@@ -1552,7 +1556,8 @@ const UI = (() => {
   }
 
   return { 
-    build, render, renderProduction, renderBuildMenu, renderWarehouse, renderPhaseOverview, 
+    build, render, 
+    renderProduction, renderBuildMenu, renderWarehouse, renderResearch, renderQuests, renderPhaseOverview, 
     getMachineFingerprint, openMarket, closeMarket,
     openSkillTree, closeSkillTree, renderSkillTree, updateGraphFilter,
     zoomGraph, centerGraph: gCenter

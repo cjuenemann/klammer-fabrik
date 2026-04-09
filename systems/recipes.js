@@ -242,14 +242,15 @@ const RECIPES = {
     isGenerator: true,
   },
 
-  // ── MARKETPLACE ──────────────────────────────────────────
+  // ── HANDEL ──────────────────────────────────────────────
   marketplace: {
     id: 'marketplace', name: 'Marktplatz', tier: 1,
     desc: 'Händler kaufen und verkaufen Waren automatisch. Zuführen zum Verkaufen, Abholen für Käufe.',
     phase: 1, unlockResearch: 'marketplace', buildCost: 500,
-    inputs: {}, outputs: {}, // No fixed inputs/outputs - accepts all
-    inputCapacity: 1000, // Large capacity for all resources
-    outputCapacity: 1000, // Large capacity for all resources
+    category: 'Handel', // Shop-Kategorie
+    inputs: {}, outputs: {},
+    inputCapacity: 1000,
+    outputCapacity: 1000,
     powerConsumption: 10,
     isMarketplace: true,
   },
