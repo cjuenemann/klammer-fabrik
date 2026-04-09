@@ -522,12 +522,8 @@ document.getElementById('rt-to-type')?.addEventListener('change', () => {
 
 // ── Centralized event delegation for game actions ───────────
 document.addEventListener('click', (e) => {
-  console.log('Click:', e.target.tagName, e.target.className);
   const target = e.target.closest('[data-action]');
-  if (!target) {
-    console.log('No data-action found. Parents:', e.target.parentElement?.className, e.target.parentElement?.parentElement?.className);
-    return;
-  }
+  if (!target) return;
   
   const action = target.dataset.action;
   

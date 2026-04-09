@@ -155,9 +155,7 @@ const UI = (() => {
       const iconEl = meta.icon
         ? `<svg class="res-icon" style="color:${color};width:14px;height:14px;flex-shrink:0" aria-hidden="true"><use href="#${meta.icon}"/></svg>`
         : `<div class="wh-dot" style="background:${color}"></div>`;
-      const sellBtn = meta.sell && qty > 0
-        ? `<button class="btn btn-sm btn-amber sell-btn" data-action="sell" data-resource="${id}" style="margin-left:4px;font-size:.65rem;padding:1px 6px;pointer-events:auto" onclick="console.log('Sell clicked direct!'); actionSell('${id}')">Verkauf</button>`
-        : '';
+      const sellBtn = meta.sell && qty > 0 ? `<span style="font-size:.65rem;color:var(--accent-amber);margin-left:4px">→ Markt</span>` : '';
       return `<div class="wh-item">
         ${iconEl}
         <div class="wh-name">${meta.name}</div>

@@ -242,6 +242,18 @@ const RECIPES = {
     isGenerator: true,
   },
 
+  // ── MARKETPLACE ──────────────────────────────────────────
+  marketplace: {
+    id: 'marketplace', name: 'Marktplatz', tier: 1,
+    desc: 'Händler kaufen und verkaufen Waren automatisch. Zuführen zum Verkaufen, Abholen für Käufe.',
+    phase: 1, unlockResearch: 'marketplace', buildCost: 500,
+    inputs: {}, outputs: {}, // No production inputs/outputs
+    inputCapacity: { clip: 100, premiumClip: 50, hybridClip: 25 },
+    outputCapacity: { steelCoil: 50, wire: 200, copperWire: 100 },
+    powerConsumption: 10,
+    isMarketplace: true,
+  },
+
   // ── MINING & EXTRACTION ──────────────────────────────────
   miningSpotSteel: {
     id: 'miningSpotSteel', name: 'Stahl-Schurfstelle', tier: 1,

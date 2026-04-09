@@ -49,6 +49,11 @@ const Research = (() => {
       {ops:150}, 10, [], ['revTracker'], 350, 0, null,
       s => { s.upgrades.revTracker = true; }),
 
+    P('marketplace','Marktplatz','Handel',
+      'Errichte einen Marktplatz — Händler kaufen und verkaufen automatisch deine Waren',
+      {ops:500}, 20, [], ['marketplace'], 500, 0, null,
+      s => { s.upgrades.marketplace = true; }),
+
     P('bottleneckAlerts','Engpass-Monitor','Mechanik',
       'Maschinen mit Effizienz <50% werden rot markiert — sofort Engpässe erkennen',
       {ops:300}, 12, [], ['bottleneckAlerts'], 0, 200, null,

@@ -4,6 +4,9 @@
 // ============================================================
 const Production = (() => {
 
+  // Products that can be sold at marketplace
+  const MARKETABLE = ['clip', 'premiumClip', 'hybridClip', 'steelCoil', 'wire', 'copperWire'];
+
   let _nextMachineId = 1;
 
   function init(state) {
@@ -235,10 +238,77 @@ const Production = (() => {
 
     // 3. Tick machines with power factor
     for (const mach of p.machines) {
-      tickMachine(state, mach, dt, powerFactor);
+      const recipe = RECIPES[mach.recipeId];
+      if (recipe?.isMarketplace) {
+        tickMarketplace(state, mach, dt);
+      } else {
+        tickMachine(state, mach, dt, powerFactor);
+      }
     }
     
     checkTrustMilestones(state);
+  }
+
+  // Marketplace trading tick
+  function tickMarketplace(state, mach, dt) {
+    const recipe = RECIPES.marketplace;
+    const m = state.market;
+    
+    // Händler kommen zufällig vorbei (ca. alle 30-60 Sekunden im Schnitt)
+    if (Math.random() < 0.1 * dt) { // ~10% Chance pro Sekunde
+      const visitors = [
+        { name: '📦 Eisenhändler', buys: ['steelCoil'], sellPriceMult: 0.9 },
+        { name: '🔧 Kupferschmied', buys: ['copperWire'], sellPriceMult: 0.85 },
+        { name: '✨ Qualitätsprüfer', buys: ['clip', 'premiumClip'], sellPriceMult: 1.0 },
+        { name: '🏭 Großhändler', buys: ['clip', 'premiumClip', 'hybridClip', 'steelCoil', 'wire', 'copperWire'], sellPriceMult: 0.95 },
+      ];
+      
+      const visitor = visitors[Math.floor(Math.random() * visitors.length)];
+      let totalTrade = 0;
+      
+      // Kaufe was im Input-Buffer ist
+      for (const res of visitor.buys) {
+        const have = mach.inputBuffer[res] || 0;
+        if (have > 0) {
+          const price = (m.prices[res] || RESOURCE_META[res]?.basePrice || 1) * visitor.sellPriceMult;
+          const toSell = Math.min(have, Math.random() * 20 + 5); // Kauft 5-25 Stück
+          const earned = toSell * price;
+          
+          if (toSell > 0.1) {
+            mach.inputBuffer[res] = (mach.inputBuffer[res] || 0) - toSell;
+            state.money += earned;
+            m.revenue += earned;
+            totalTrade += earned;
+          }
+        }
+      }
+      
+      // Verkaufe was der Händler mitbringt (in Output-Buffer)
+      for (const res of MARKETABLE) {
+        const meta = RESOURCE_META[res];
+        if (!meta) continue;
+        const cap = recipe.outputCapacity?.[res] || 50;
+        const current = mach.outputBuffer[res] || 0;
+        if (current < cap && Math.random() < 0.3) {
+          const buyPrice = (m.prices[res] || meta.basePrice || 1) * 1.1; // Zahlt mehr als Basis
+          const canAfford = Math.floor(state.money / buyPrice);
+          const toBuy = Math.min(canAfford, Math.random() * 10 + 2, cap - current);
+          
+          if (toBuy > 0.1) {
+            const cost = toBuy * buyPrice;
+            state.money -= cost;
+            mach.outputBuffer[res] = (mach.outputBuffer[res] || 0) + toBuy;
+            totalTrade += cost;
+          }
+        }
+      }
+      
+      if (totalTrade > 0) {
+        logEvent(`${visitor.name} war da: +${fmtMoney(totalTrade)}`);
+      }
+    }
+    
+    mach.efficiency = 1;
   }
 
   // Action for Handkurbel-Generator
