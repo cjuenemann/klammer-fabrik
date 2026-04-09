@@ -274,6 +274,7 @@
     </div>
   </div>
   <div id="header-controls">
+    <button class="btn btn-sm" id="btn-cli">CLI</button>
     <button class="btn btn-sm" id="btn-save">Speichern</button>
     <button class="btn btn-sm" id="btn-reset" style="color:#aaa">↺ Reset</button>
   </div>
@@ -480,6 +481,33 @@
       <canvas id="skilltree-canvas"></canvas>
       <svg id="skilltree-svg" style="display:none"></svg>
       <div id="skilltree-nodes" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CLI Modal -->
+<div id="modal-cli" class="modal-overlay hidden" onclick="if(event.target===this)UI.closeCLI()">
+  <div class="modal-card" style="min-width:500px;max-width:700px">
+    <span class="modal-close" onclick="UI.closeCLI()">&times;</span>
+    <div class="panel-title">⚡ CLI — Konsolen-Befehle</div>
+    <div style="padding:12px;font-size:.8rem;color:var(--text-muted)">
+      Kopiere einen Befehl und führe ihn in der Browser-Konsole (F12) aus.
+    </div>
+    <div id="cli-commands" style="padding:0 12px 12px;max-height:60vh;overflow-y:auto">
+      <!-- Commands populated by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- Warehouse Sell Modal -->
+<div id="modal-sell" class="modal-overlay hidden" onclick="if(event.target===this)UI.closeSell()">
+  <div class="modal-card" style="min-width:400px">
+    <span class="modal-close" onclick="UI.closeSell()">&times;</span>
+    <div class="panel-title">💰 Manueller Verkauf</div>
+    <div style="padding:12px">
+      <div id="sell-items" style="max-height:50vh;overflow-y:auto">
+        <!-- Items populated by JS -->
+      </div>
     </div>
   </div>
 </div>

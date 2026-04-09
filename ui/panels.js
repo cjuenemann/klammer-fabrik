@@ -13,6 +13,7 @@ const UI = (() => {
 
   function wireStaticEvents() {
     document.getElementById('btn-save')?.addEventListener('click', () => { saveGame(); showNotif('Gespeichert!'); });
+    document.getElementById('btn-cli')?.addEventListener('click', () => openCLI(STATE));
     document.getElementById('btn-reset')?.addEventListener('click', () => {
       const overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
@@ -34,6 +35,12 @@ const UI = (() => {
       overlay.onclick = (e) => {
         if (e.target === overlay) document.body.removeChild(overlay);
       };
+    });
+
+    // Warehouse click to open sell modal
+    document.getElementById('warehouse-grid')?.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return; // Don't open if clicking a button
+      openSellModal(STATE);
     });
   }
 
@@ -1555,11 +1562,97 @@ const UI = (() => {
     _gV.z = Math.max(0.15, Math.min(3, _gV.z * factor));
   }
 
+  // ── CLI Modal ─────────────────────────────────────────────
+  function openCLI(state) {
+    const el = document.getElementById('cli-commands');
+    if (!el) return;
+    
+    const commands = [
+      { name: 'Geld', cmd: 'STATE.money += 1000', desc: '+€1000' },
+      { name: 'Ops', cmd: 'STATE.research.ops += 500', desc: '+500 Ops' },
+      { name: 'Stahlcoils', cmd: 'Production.addToWarehouse(STATE, "steelCoil", 10)', desc: '+10 Stahlcoils' },
+      { name: 'Draht', cmd: 'Production.addToWarehouse(STATE, "wire", 50)', desc: '+50m Draht' },
+      { name: 'Klammern', cmd: 'Production.addToWarehouse(STATE, "clip", 100)', desc: '+100 Klammern' },
+      { name: 'Maschinen-Übersicht', cmd: 'console.table(STATE.production.machines)', desc: 'Alle Maschinen anzeigen' },
+      { name: 'Lager anzeigen', cmd: 'console.table(STATE.production.warehouse)', desc: 'Lager anzeigen' },
+      { name: 'Research abschließen', cmd: 'Research.getAvailable(STATE).forEach(p => { STATE.research.ops += p.ops; Research.startProject(STATE, p.id); }); UI.renderResearch(STATE);', desc: 'Alle Forschungen starten' },
+    ];
+    
+    el.innerHTML = commands.map(c => `
+      <div style="margin-bottom:8px;padding:8px;background:var(--bg-panel);border-radius:4px">
+        <div style="font-weight:600;margin-bottom:4px">${c.name}</div>
+        <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:4px">${c.desc}</div>
+        <code style="display:block;padding:6px;background:var(--bg-base);border-radius:3px;font-size:.75rem;cursor:pointer" onclick="navigator.clipboard.writeText(this.textContent.trim())">${c.cmd}</code>
+      </div>
+    `).join('');
+    
+    document.getElementById('modal-cli')?.classList.remove('hidden');
+  }
+
+  function closeCLI() {
+    document.getElementById('modal-cli')?.classList.add('hidden');
+  }
+
+  // ── Sell Modal ────────────────────────────────────────────
+  function openSellModal(state) {
+    const el = document.getElementById('sell-items');
+    if (!el) return;
+    
+    const wh = state.production?.warehouse || {};
+    const sellable = Object.entries(RESOURCE_META).filter(([id, meta]) => meta.sell && (wh[id] || 0) > 0);
+    
+    if (sellable.length === 0) {
+      el.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px">Nichts zum Verkaufen</div>';
+    } else {
+      el.innerHTML = sellable.map(([id, meta]) => {
+        const qty = wh[id] || 0;
+        const price = state.market?.prices[id] || meta.basePrice || 0.1;
+        return `
+          <div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--border)">
+            <span style="flex:1">${meta.name}</span>
+            <span style="font-size:.75rem;color:var(--text-muted)">${fmt(qty,0)} Stk @ ${fmtMoney(price)}</span>
+            <button class="btn btn-sm btn-amber" onclick="cliSellAll('${id}')">Alles</button>
+            <button class="btn btn-sm" onclick="cliSellHalf('${id}')">50%</button>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    document.getElementById('modal-sell')?.classList.remove('hidden');
+  }
+
+  function closeSell() {
+    document.getElementById('modal-sell')?.classList.add('hidden');
+  }
+
+  function cliSellAll(resourceId) {
+    const qty = Math.floor(STATE.production?.warehouse?.[resourceId] || 0);
+    if (qty <= 0) return;
+    const result = Market.sellProduct(STATE, resourceId, qty);
+    if (result.ok) {
+      showNotif(`${result.sold}× verkauft für ${fmtMoney(result.earned)}`);
+      renderWarehouse(STATE);
+      openSellModal(STATE);
+    }
+  }
+
+  function cliSellHalf(resourceId) {
+    const qty = Math.floor((STATE.production?.warehouse?.[resourceId] || 0) / 2);
+    if (qty <= 0) return;
+    const result = Market.sellProduct(STATE, resourceId, qty);
+    if (result.ok) {
+      showNotif(`${result.sold}× verkauft für ${fmtMoney(result.earned)}`);
+      renderWarehouse(STATE);
+      openSellModal(STATE);
+    }
+  }
+
   return { 
     build, render, 
     renderProduction, renderBuildMenu, renderWarehouse, renderResearch, renderQuests, renderPhaseOverview, 
     getMachineFingerprint, openMarket, closeMarket,
     openSkillTree, closeSkillTree, renderSkillTree, updateGraphFilter,
+    openCLI, closeCLI, openSellModal, closeSell, cliSellAll, cliSellHalf,
     zoomGraph, centerGraph: gCenter
   };
 })();

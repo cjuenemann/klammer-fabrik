@@ -303,6 +303,10 @@ function bootGame() {
   running = true;
   requestAnimationFrame(gameTick);
   logEvent('📎 Willkommen bei KLAMMER FABRIK');
+  
+  // Make UI functions globally available after UI is built
+  window.cliSellAll = UI.cliSellAll;
+  window.cliSellHalf = UI.cliSellHalf;
 }
 
 // Make functions globally available for onclick handlers
