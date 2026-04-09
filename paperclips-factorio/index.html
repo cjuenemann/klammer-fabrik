@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KLAMMER FABRIK — Industrielles Produktionsspiel</title>
+  <meta name="description" content="Baue deine Klammer-Fabrik mit echten Produktionsketten, Logistik und Engpass-Management. Paperclips × Factorio.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Extra: Machine cards ──────────────────────────────── */
+    .machine-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-panel);
+      margin-bottom: var(--gap-sm);
+      position: relative;
+    }
+    .machine-card-alert { border-color: var(--accent-red) !important; }
+    .machine-card-header {
+      display: flex; align-items: center; gap: var(--gap-sm);
+      background: var(--bg-panel-dark);
+      padding: 5px var(--gap-md);
+      border-bottom: 1px solid var(--border);
+    }
+    .machine-name { font-weight: 600; font-size: .82rem; flex: 1; }
+    .machine-eff  { font-family: var(--font-mono); font-size: .8rem; font-weight: 600; }
+    .machine-desc { font-size: .72rem; color: var(--text-muted); padding: 3px var(--gap-md); }
+    .machine-cycle {
+      height: 3px; background: var(--progress-bg); margin: 0;
+    }
+    .machine-cycle-fill {
+      height: 100%; background: var(--accent-green);
+      transition: width 0.1s linear;
+    }
+    .machine-buffers {
+      display: flex; align-items: stretch; gap: 0;
+      padding: var(--gap-sm) var(--gap-md);
+    }
+    .buffer-group { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .buffer-group-label {
+      font-family: var(--font-mono); font-size: .62rem;
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: .08em; margin-bottom: 2px;
+    }
+    .buffer-slot { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+    .buffer-label { font-size: .7rem; color: var(--text-secondary); min-width: 80px; }
+    .buffer-bar {
+      flex: 1; height: 8px; background: var(--progress-bg);
+      border: 1px solid var(--border-light); border-radius: 1px; overflow: hidden;
+      min-width: 40px;
+    }
+    .buffer-fill { height: 100%; transition: width 0.3s; }
+    .buffer-nums { font-family: var(--font-mono); font-size: .68rem; color: var(--text-muted); min-width: 55px; text-align: right; }
+    .machine-arrow {
+      padding: 0 var(--gap-sm);
+      font-family: var(--font-mono); font-size: 1.2rem;
+      color: var(--accent-green); display: flex; align-items: center;
+    }
+
+    /* ── Warehouse grid ────────────────────────────────────── */
+    #warehouse-grid { display: flex; flex-direction: column; gap: 2px; }
+    .wh-item { display: flex; align-items: center; gap: var(--gap-sm); padding: 2px 0; border-bottom: 1px solid var(--border-light); }
+    .wh-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .wh-name { font-size: .75rem; color: var(--text-secondary); flex: 1; }
+    .wh-qty  { font-family: var(--font-mono); font-size: .78rem; color: var(--text-value); }
+
+    /* ── Market buy/sell rows ──────────────────────────────── */
+    .buy-row  { display: flex; align-items: center; gap: var(--gap-sm); padding: 4px 0; border-bottom: 1px solid var(--border-light); }
+    .sell-row { display: flex; gap: var(--gap-sm); padding: 5px 0; border-bottom: 1px solid var(--border-light); align-items: center; }
+    .sell-left  { flex: 1; }
+    .sell-right { text-align: center; }
+
+    /* ── Grid layout ───────────────────────────────────────── */
+    #main {
+      grid-template-columns: 240px 1fr 300px;
+    }
+    @media(max-width:1100px) {
+      #main { grid-template-columns: 1fr 1fr; }
+    }
+    @media(max-width:700px) {
+      #main { grid-template-columns: 1fr; }
+    }
+
+    /* ── Tabs ──────────────────────────────────────────────── */
+    .right-tabs { display: flex; flex-direction: column; gap: var(--gap-md); }
+    .panel-body-scroll { max-height: 500px; overflow-y: auto; padding: var(--gap-md); }
+    /* ── Power Grid Status ─────────────────────────────────── */
+    .power-grid { display: flex; gap: var(--gap-md); align-items: center; padding: 0 var(--gap-md); border-left: 1px solid var(--border); }
+    .brownout-warn { border: 2px solid var(--accent-red) !important; animation: pulse-red 2s infinite; }
+    @keyframes pulse-red { 
+      0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+    }
+    /* ── Machine Stacking ── */
+    .machine-stack { position: relative; }
+    .machine-stack::before, .machine-stack::after {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg-panel); border: 1px solid var(--border); border-radius: 4px; z-index: -1;
+    }
+    .machine-stack::before { transform: translate(4px, 4px); }
+    .machine-stack::after  { transform: translate(8px, 8px); }
+    .stack-badge { 
+      position: absolute; top: -12px; left: 10px; 
+      background: var(--accent-amber); color: #000; 
+      padding: 1px 8px; border: 1px solid #000;
+      font-family: var(--font-mono); font-weight: bold; font-size: 0.85rem;
+      box-shadow: 4px 4px 0px rgba(0,0,0,0.15); z-index: 50;
+    }
+    .overview-count { font-weight: bold; color: var(--accent-amber); }
+
+    /* ── Skilltree (styles in style.css) ── */
+
+    /* ── Collection Button ── */
+    .btn-collect {
+      min-width: 65px;
+      padding: 4px 12px !important;
+      font-size: 0.7rem !important;
+      font-weight: bold;
+      transition: all 0.2s;
+      background: var(--bg-panel-dark);
+      color: var(--text-primary);
+      border: 1px solid var(--border-dark);
+      box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    }
+    .btn-collect:hover:not(:disabled) {
+      background: var(--accent-amber);
+      color: #000; border-color: #000;
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0 rgba(0,0,0,0.2);
+    }
+
+    #hdr-money {
+      cursor: pointer; text-decoration: underline dotted;
+      transition: color 0.2s;
+    }
+    #hdr-money:hover { color: var(--accent-amber-l); }
+  </style>
+</head>
+<body>
+
+<!-- ── SVG Icon Sprite Sheet ────────────────────────────────── -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <defs>
+    <!-- Coil / spool -->
+    <symbol id="icon-coil" viewBox="0 0 16 16">
+      <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <circle cx="8" cy="8" r="2.5" fill="currentColor"/>
+      <path d="M8 2 A6 6 0 0 1 14 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+    <!-- Wire / wavy -->
+    <symbol id="icon-wire" viewBox="0 0 16 16">
+      <path d="M1 8 Q3 5 5 8 Q7 11 9 8 Q11 5 13 8 Q14 9.5 15 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <!-- Blank / rectangle part -->
+    <symbol id="icon-blank" viewBox="0 0 16 16">
+      <rect x="2" y="5" width="12" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="5" y1="5" x2="5" y2="11" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+      <line x1="11" y1="5" x2="11" y2="11" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+    </symbol>
+    <!-- Paperclip -->
+    <symbol id="icon-clip" viewBox="0 0 16 16">
+      <path d="M10 3 C12 3 13 4.5 13 6 L13 11 C13 13.2 11.2 15 9 15 C6.8 15 5 13.2 5 11 L5 5.5 C5 4.1 6.1 3 7.5 3 C8.9 3 10 4.1 10 5.5 L10 11 C10 11.6 9.6 12 9 12 C8.4 12 8 11.6 8 11 L8 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </symbol>
+    <!-- Staple / U-shape -->
+    <symbol id="icon-staple" viewBox="0 0 16 16">
+      <path d="M3 4 L3 12 Q3 13 4 13 L12 13 Q13 13 13 12 L13 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="1" y1="4" x2="15" y2="4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <!-- Flask / chemical -->
+    <symbol id="icon-flask" viewBox="0 0 16 16">
+      <path d="M6 2 L6 7 L2 13 Q1.5 14 2.5 14 L13.5 14 Q14.5 14 14 13 L10 7 L10 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="5" y1="2" x2="11" y2="2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="7" cy="11" r="1" fill="currentColor" opacity="0.6"/>
+    </symbol>
+    <!-- Drop / water -->
+    <symbol id="icon-drop" viewBox="0 0 16 16">
+      <path d="M8 2 Q12 7 12 10.5 A4 4 0 0 1 4 10.5 Q4 7 8 2 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    </symbol>
+    <!-- Coal / hexagon -->
+    <symbol id="icon-coal" viewBox="0 0 16 16">
+      <polygon points="8,1 14,4.5 14,11.5 8,15 2,11.5 2,4.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+    </symbol>
+    <!-- Scrap / crumbled -->
+    <symbol id="icon-scrap" viewBox="0 0 16 16">
+      <path d="M2 3 L6 2 L9 4 L14 2 L13 7 L14 13 L9 14 L5 12 L2 14 L3 8 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    </symbol>
+    <!-- Power / lightning -->
+    <symbol id="icon-power" viewBox="0 0 16 16">
+      <path d="M9 2 L4 9 L8 9 L7 14 L12 7 L8 7 Z" fill="currentColor" opacity="0.85"/>
+    </symbol>
+    <!-- Ingot / steel bar -->
+    <symbol id="icon-ingot" viewBox="0 0 16 16">
+      <path d="M2 6 L4 4 L12 4 L14 6 L14 11 L2 11 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      <line x1="4" y1="4" x2="2" y2="6" stroke="currentColor" stroke-width="1"/>
+      <line x1="12" y1="4" x2="14" y2="6" stroke="currentColor" stroke-width="1"/>
+    </symbol>
+    <!-- Copper ingot (with dot) -->
+    <symbol id="icon-ingot-cu" viewBox="0 0 16 16">
+      <use href="#icon-ingot"/>
+      <circle cx="8" cy="7.5" r="1.5" fill="currentColor" opacity="0.5"/>
+    </symbol>
+    <!-- Granule -->
+    <symbol id="icon-granule" viewBox="0 0 16 16">
+      <circle cx="4" cy="5" r="2" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <circle cx="10" cy="4" r="2" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <circle cx="7" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <circle cx="12" cy="10" r="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/>
+    </symbol>
+    <!-- Gas / cloud -->
+    <symbol id="icon-gas" viewBox="0 0 16 16">
+      <path d="M3 11 A3 3 0 0 1 4 5 A2 2 0 0 1 8 4 A3 3 0 0 1 13 7 A2.5 2.5 0 0 1 12 12 Z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    </symbol>
+    <!-- Ore chunk -->
+    <symbol id="icon-ore" viewBox="0 0 16 16">
+      <path d="M4 13 L2 8 L5 3 L9 2 L14 5 L13 11 L9 14 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M6 6 L8 5 L11 7 L9 10 L6 9 Z" fill="currentColor" opacity="0.3"/>
+    </symbol>
+    <!-- Oil / lubricant -->
+    <symbol id="icon-oil" viewBox="0 0 16 16">
+      <path d="M8 2 Q10 4 10 7 Q10 10 8 11 Q6 10 6 7 Q6 4 8 2 Z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M5 11 Q3 12 3 13.5 Q3 15 8 15 Q13 15 13 13.5 Q13 12 11 11" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+    </symbol>
+    <!-- Cap / endcap -->
+    <symbol id="icon-cap" viewBox="0 0 16 16">
+      <path d="M3 8 Q3 4 8 4 Q13 4 13 8 L13 11 Q13 13 8 13 Q3 13 3 11 Z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="3" y1="9" x2="13" y2="9" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+    </symbol>
+    <!-- Powder -->
+    <symbol id="icon-powder" viewBox="0 0 16 16">
+      <ellipse cx="8" cy="12" rx="5" ry="2" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <path d="M5 12 Q5 7 8 5 Q11 7 11 12" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <line x1="6" y1="7" x2="5" y2="5" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+      <line x1="8" y1="6" x2="8" y2="3" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+      <line x1="10" y1="7" x2="11" y2="5" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+    </symbol>
+  </defs>
+</svg>
+
+
+<!-- ── Header ─────────────────────────────────────────────── -->
+<header id="app-header">
+  <div class="logo">KLAMMER <span>FABRIK</span></div>
+  <div id="header-stats">
+    <div class="stat">
+      <span class="stat-label">Clips</span>
+      <span class="stat-value" id="hdr-clips">0</span>
+    </div>
+    <div class="stat" onclick="UI.openMarket()" style="cursor:pointer" title="Markt öffnen">
+      <span class="stat-label">Geld</span>
+      <span class="stat-value" id="hdr-money">€50.00</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Power</span>
+      <div style="display:flex;gap:6px;align-items:baseline">
+        <span class="stat-value" id="hdr-power-gen" style="color:var(--accent-green)">0W</span>
+        <span style="font-size:.7rem;opacity:.5">/</span>
+        <span class="stat-value" id="hdr-power-cons" style="color:var(--accent-red)">0W</span>
+        <span class="badge" id="hdr-power-factor" style="font-size:.65rem">100%</span>
+      </div>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Trust</span>
+      <span class="stat-value" id="hdr-trust">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Phase</span>
+      <span class="stat-value" id="hdr-phase">1</span>
+    </div>
+    <div class="stat hidden" id="hdr-rev-wrap">
+      <span class="stat-label">Umsatz Ø</span>
+      <span class="stat-value" id="hdr-rev">—</span>
+    </div>
+  </div>
+  <div id="header-controls">
+    <button class="btn btn-sm" id="btn-save">Speichern</button>
+    <button class="btn btn-sm" id="btn-reset" style="color:#aaa">↺ Reset</button>
+  </div>
+</header>
+
+<div id="phase-banner">
+  <span class="phase-tag" id="phase-tag">Phase 1 — Werkstatt</span>
+  <span style="opacity:.5;margin-left:auto">KLAMMER FABRIK Alpha — Autosave alle 30s</span>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="main">
+
+  <!-- ═══ COLUMN 1: Status & Markt ═══ -->
+  <div style="display:flex;flex-direction:column;gap:var(--gap-md)">
+
+    <!-- Lager -->
+    <div class="panel">
+      <div class="panel-title">Lager</div>
+      <div class="panel-body" style="padding:8px 12px">
+        <div id="warehouse-grid"></div>
+      </div>
+    </div>
+
+    <!-- Ops & Research-Status -->
+    <div class="panel">
+      <div class="panel-title">Rechenkapazität</div>
+      <div class="panel-body">
+        <div class="form-row">
+          <span class="form-label">Ops</span>
+          <span class="form-value text-mono"><span id="ops-val">0</span> / <span id="ops-max">300</span></span>
+        </div>
+        <div class="form-row">
+          <span class="form-label" style="color:var(--text-muted);font-size:.72rem">Ops-Rate</span>
+          <span class="form-value text-mono" style="font-size:.78rem;color:var(--text-muted)" id="ops-rate">+1/s</span>
+        </div>
+        <div class="form-row" id="creat-section" style="display:none">
+          <span class="form-label">Kreativität</span>
+          <span class="form-value text-mono"><span id="creat-val">0</span></span>
+        </div>
+        <div class="form-row" id="creat-rate-row" style="display:none">
+          <span class="form-label" style="color:var(--text-muted);font-size:.72rem">Kreativ-Rate</span>
+          <span class="form-value text-mono" style="font-size:.78rem;color:var(--text-muted)" id="creat-rate">0/s</span>
+        </div>
+        <div class="form-row">
+          <span class="form-label">Trust</span>
+          <span class="form-value" id="trust-val">0</span>
+        </div>
+        <button id="btn-manual-think" class="btn btn-sm btn-amber" style="width:100%;margin-top:12px;font-weight:600" 
+          onclick="actionManualThink()">MUSTER ERKENNEN (+10 Ops)</button>
+      </div>
+    </div>
+
+      <!-- ── Event Log ────────────────────────────────────── -->
+      <section class="panel log-panel" style="flex: 1; display: flex; flex-direction: column; min-height: 200px;">
+        <div class="panel-title">PROTOKOLL</div>
+        <div id="log-body" class="panel-body-scroll" style="flex: 1; font-size: 0.72rem; line-height: 1.4;"></div>
+      </section>
+
+      <!-- ── Phase Overview ── -->
+      <section class="panel" style="margin-top: var(--gap-md);">
+        <div class="panel-title">Phasenübersicht</div>
+        <div id="phase-overview" class="panel-body" style="padding: 4px 12px; font-size: 0.75rem;">
+          <div class="text-muted">Keine Maschinen vorhanden.</div>
+        </div>
+      </section>
+    </aside>
+
+  </div><!-- /col1 -->
+
+
+  <!-- ═══ COLUMN 2: Produktionshalle (center, wide) ═══ -->
+  <div style="display:flex;flex-direction:column;gap:var(--gap-md)">
+
+    <!-- Active research banner -->
+    <div class="panel hidden" id="research-active-panel" style="border-color:var(--accent-green)">
+      <div class="panel-body" style="padding:8px 12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-weight:600;font-size:.8rem">🔬 Forschung läuft: <span id="research-active-name"></span></span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="research-active-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- Produktionshalle -->
+    <div class="panel">
+      <div class="panel-title">Produktionshalle
+        <span class="badge amber" id="machine-count-badge" style="margin-left:8px">0 Maschinen</span>
+      </div>
+      <div class="panel-body" id="production-hall" style="max-height:800px;overflow-y:auto">
+        <div class="text-muted" style="padding:16px;text-align:center">
+          Noch keine Maschinen — kaufe deine erste Maschine im Shop.
+        </div>
+      </div>
+    </div>
+
+    <!-- Logistik-Routen -->
+    <div class="panel">
+      <div class="panel-title">Logistik &amp; Transport</div>
+      <div class="panel-body">
+        <div id="log-routes">
+          <div class="text-muted" style="font-size:.75rem">Forschung: Förderband erforderlich</div>
+        </div>
+
+        <div id="log-add-form" class="hidden" style="margin-top:var(--gap-md)">
+          <div class="section-divider">Neue Route</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;font-size:.78rem">
+            <select id="rt-from-type" class="btn btn-sm" style="background:var(--bg-base);color:var(--text-primary);border:1px solid var(--border)">
+              <option value="warehouse">Lager (Quelle)</option>
+              <option value="machine">Maschine (Quelle)</option>
+            </select>
+            <select id="rt-from-machine" class="btn btn-sm" style="width:140px;background:var(--bg-base);color:var(--text-primary);border:1px solid var(--border);display:none"></select>
+            <input id="rt-from-res" type="text" placeholder="Ressource (z.B. wire)" class="btn btn-sm" style="width:120px;background:var(--bg-base);color:var(--text-primary);border:1px solid var(--border)">
+            <span style="align-self:center">-></span>
+            <select id="rt-to-type" class="btn btn-sm" style="background:var(--bg-base);color:var(--text-primary);border:1px solid var(--border)">
+              <option value="machine">Maschine (Ziel)</option>
+              <option value="warehouse">Lager (Ziel)</option>
+            </select>
+            <select id="rt-to-machine" class="btn btn-sm" style="width:140px;background:var(--bg-base);color:var(--text-primary);border:1px solid var(--border)"></select>
+            <input id="rt-to-res" type="text" placeholder="Ressource (z.B. wire)" class="btn btn-sm" style="width:120px;background:var(--bg-base);color:var(--text-primary);border:1px solid var(--border)">
+            <select id="rt-vehicle" class="btn btn-sm" style="background:var(--bg-base);color:var(--text-primary);border:1px solid var(--border)">
+              <option value="belt">Förderband (€500)</option>
+              <option value="fastBelt" id="opt-fastBelt" disabled>Schnellband (€5k)</option>
+              <option value="truck" id="opt-truck" disabled>LKW (€25k)</option>
+              <option value="pipeline" id="opt-pipeline" disabled>Pipeline (€200k)</option>
+            </select>
+            <button class="btn btn-sm btn-amber" onclick="addRouteFromForm()">Route einrichten</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /col2 -->
+
+
+  <!-- ═══ COLUMN 3: Shop & Forschung (fixed right) ═══ -->
+  <aside class="right-tabs" style="width:300px">
+    <!-- Shop -->
+    <div class="panel">
+      <div class="panel-title">Maschinenshop</div>
+      <div class="panel-body-scroll" id="build-menu" style="max-height: 40vh;"></div>
+    </div>
+
+    <!-- Forschung -->
+    <div class="panel">
+      <div class="panel-title">Forschung &amp; Entwicklung
+        <span class="badge" id="completed-count" style="margin-left:6px">0</span> abgeschlossen
+      </div>
+      <div class="panel-body-scroll" id="research-list" style="max-height: 50vh;">
+        <div class="text-muted">Baue Maschinen um Ops zu generieren und Forschung zu starten.</div>
+      </div>
+    </div>
+  </aside>
+
+</div><!-- /main -->
+
+<div id="notif-container"></div>
+
+<!-- ── Modal: Market ──────────────────────────────────────── -->
+<div id="modal-overlay" class="modal-overlay hidden" onclick="if(event.target===this)UI.closeMarket()">
+  <div id="market-modal" class="modal-card">
+    <span class="modal-close" onclick="UI.closeMarket()">&times;</span>
+    <div class="panel-title">Globaler Markt &amp; Vertrieb</div>
+    <div class="panel-body" style="overflow-y:auto">
+      <div class="section-divider" style="margin-top:0">ROHSTOFFE BESCHAFFEN</div>
+      <div id="buy-resources" style="margin-bottom: var(--gap-lg)"></div>
+      
+      <div class="section-divider">PRODUKTE VERTREIBEN</div>
+      <div id="sell-products"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Skilltree ────────────────────────────────────── -->
+<div id="modal-skilltree" class="modal-overlay hidden" onclick="if(event.target===this)UI.closeSkillTree()">
+  <div id="skilltree-modal" class="modal-card">
+    <span class="modal-close" onclick="UI.closeSkillTree()">&times;</span>
+    <div class="panel-title">Forschungs-Netzwerk
+      <span style="font-size:.6rem;opacity:.6;margin-left:auto">Ziehen: Knoten bewegen · Scrollen: Zoom · Hintergrund: Verschieben</span>
+    </div>
+    <div id="skilltree-toolbar">
+      <label class="st-filter"><input type="checkbox" id="st-hide-done" onchange="UI.updateGraphFilter()"> Altes ausblenden</label>
+      <label class="st-filter"><input type="checkbox" id="st-hide-future" checked onchange="UI.updateGraphFilter()"> Zukuenftiges ausblenden</label>
+      <span id="st-filter-count" style="margin-left:12px;font-size:.65rem;opacity:.6"></span>
+      
+      <div id="st-zoom-controls" style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+        <button class="btn btn-sm" onclick="UI.zoomGraph(0.8)" title="Herauszoomen" style="padding: 2px 8px; min-width: 24px;">-</button>
+        <span id="st-zoom-level" style="font-family: 'Share Tech Mono', monospace; font-size: 11px; min-width: 36px; text-align: center; color: #555; font-weight: bold;">100%</span>
+        <button class="btn btn-sm" onclick="UI.zoomGraph(1.25)" title="Hineinzoomen" style="padding: 2px 8px; min-width: 24px;">+</button>
+        <button class="btn btn-sm" onclick="UI.centerGraph()" style="padding: 2px 8px; margin-left: 4px; font-size: 10px;">Zentrieren</button>
+      </div>
+
+      <button class="btn btn-sm" onclick="document.getElementById('st-hide-done').checked=false;document.getElementById('st-hide-future').checked=false;UI.updateGraphFilter()" style="margin-left:16px;font-size:.65rem">Filter zuruecksetzen</button>
+    </div>
+    <div id="skilltree-canvas-wrap" style="position:relative">
+      <canvas id="skilltree-canvas"></canvas>
+      <svg id="skilltree-svg" style="display:none"></svg>
+      <div id="skilltree-nodes" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="systems/save.js"></script>
+<script src="systems/recipes.js"></script>
+<script src="systems/market.js"></script>
+<script src="systems/production.js"></script>
+<script src="systems/research.js"></script>
+<script src="systems/logistics.js"></script>
+<script src="ui/panels.js"></script>
+<script src="game.js"></script>
+
+<script>
+// ── Route form helper ─────────────────────────────────────
+function addRouteFromForm() {
+  const fromType     = document.getElementById('rt-from-type').value;
+  const fromMachineId= parseInt(document.getElementById('rt-from-machine').value) || null;
+  const fromResource = document.getElementById('rt-from-res').value.trim();
+  const toType       = document.getElementById('rt-to-type').value;
+  const toMachineId  = parseInt(document.getElementById('rt-to-machine').value) || null;
+  const toResource   = document.getElementById('rt-to-res').value.trim();
+  const transport    = document.getElementById('rt-vehicle').value;
+  if (!fromResource || !toResource) { showNotif('Ressource angeben!', 'warn'); return; }
+  actionAddRoute(fromType, fromMachineId, fromResource, toType, toMachineId, toResource, transport);
+}
+
+// ── Show logistics form when automation unlocked ──────────
+// ── Enable transport options as they unlock ───────────────
+document.getElementById('rt-from-type')?.addEventListener('change', () => {
+  const v = document.getElementById('rt-from-type').value;
+  document.getElementById('rt-from-machine').style.display = v === 'machine' ? '' : 'none';
+});
+document.getElementById('rt-to-type')?.addEventListener('change', () => {
+  const v = document.getElementById('rt-to-type').value;
+  document.getElementById('rt-to-machine').style.display = v === 'machine' ? '' : 'none';
+});
+</script>
+</body>
+</html>
