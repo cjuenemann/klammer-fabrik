@@ -1658,9 +1658,13 @@ const UI = (() => {
   }
 
   function cliSellAll(resourceId) {
+    // DEBUG: Console-Log - NICHT ENTFERNEN
+    console.log('cliSellAll:', resourceId);
     const qty = Math.floor(STATE.production?.warehouse?.[resourceId] || 0);
+    console.log('qty to sell:', qty);
     if (qty <= 0) { showNotif('Nichts zum Verkaufen', 'warn'); return; }
     const result = Market.sellProduct(STATE, resourceId, qty);
+    console.log('result:', result);
     if (result.ok) {
       showNotif(`${result.sold}× verkauft für ${fmtMoney(result.earned)}`);
       renderWarehouse(STATE);
@@ -1670,6 +1674,8 @@ const UI = (() => {
   }
 
   function cliSellHalf(resourceId) {
+    // DEBUG: Console-Log - NICHT ENTFERNEN
+    console.log('cliSellHalf:', resourceId);
     const qty = Math.floor((STATE.production?.warehouse?.[resourceId] || 0) / 2);
     if (qty <= 0) { showNotif('Nichts zum Verkaufen', 'warn'); return; }
     const result = Market.sellProduct(STATE, resourceId, qty);
@@ -1682,12 +1688,16 @@ const UI = (() => {
   }
 
   function cliSellCustom(resourceId) {
+    // DEBUG: Console-Log - NICHT ENTFERNEN
+    console.log('cliSellCustom:', resourceId);
     const inputEl = document.getElementById(`sell-qty-${resourceId}`);
     const qty = parseInt(inputEl?.value) || 0;
+    console.log('qty to sell:', qty);
     if (qty <= 0) { showNotif('Ungültige Menge', 'warn'); return; }
     const maxQty = Math.floor(STATE.production?.warehouse?.[resourceId] || 0);
     if (qty > maxQty) qty = maxQty;
     const result = Market.sellProduct(STATE, resourceId, qty);
+    console.log('result:', result);
     if (result.ok) {
       showNotif(`${result.sold}× verkauft für ${fmtMoney(result.earned)}`);
       renderWarehouse(STATE);

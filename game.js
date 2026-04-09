@@ -331,6 +331,9 @@ function copyToClipboard(text) { navigator.clipboard.writeText(text); showNotif(
 // Make CLI helpers globally available
 window.copyToClipboard = copyToClipboard;
 window.adjustSellQty = UI.adjustSellQty;
+window.cliSellAll = UI.cliSellAll;
+window.cliSellHalf = UI.cliSellHalf;
+window.cliSellCustom = UI.cliSellCustom;
 
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') UI.closeMarket();

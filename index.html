@@ -639,6 +639,14 @@ document.addEventListener('click', (e) => {
     if (resource && typeof cliSellHalf === 'function') cliSellHalf(resource);
     return;
   }
+  
+  if (action === 'cli-sell-custom') {
+    e.preventDefault();
+    console.log('cli-sell-custom clicked');
+    const resource = target.dataset.resource;
+    if (resource && typeof cliSellCustom === 'function') cliSellCustom(resource);
+    return;
+  }
 });
 </script>
 </body>
