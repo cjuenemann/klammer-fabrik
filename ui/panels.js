@@ -128,18 +128,6 @@ const UI = (() => {
     const el  = document.getElementById('warehouse-grid');
     if (!el) return;
 
-    // Attach delegated click handler once
-    if (!el.dataset.sellHandler) {
-      el.addEventListener('click', (e) => {
-        const btn = e.target.closest('.sell-btn');
-        if (btn) {
-          const resource = btn.dataset.resource;
-          if (window.actionSell) window.actionSell(resource);
-        }
-      });
-      el.dataset.sellHandler = '1';
-    }
-
     const entries = Object.entries(RESOURCE_META)
       .filter(([id]) => (wh[id] || 0) > 0 || state.upgrades?.[RESOURCE_META[id].unlockResearch] !== undefined)
       .filter(([, meta]) => {
@@ -168,7 +156,7 @@ const UI = (() => {
         ? `<svg class="res-icon" style="color:${color};width:14px;height:14px;flex-shrink:0" aria-hidden="true"><use href="#${meta.icon}"/></svg>`
         : `<div class="wh-dot" style="background:${color}"></div>`;
       const sellBtn = meta.sell && qty > 0
-        ? `<button class="btn btn-sm btn-amber sell-btn" data-resource="${id}" style="margin-left:4px;font-size:.65rem;padding:1px 6px">Verkauf</button>`
+        ? `<button class="btn btn-sm btn-amber sell-btn" data-resource="${id}" style="margin-left:4px;font-size:.65rem;padding:1px 6px" onclick="window.actionSell('${id}')">Verkauf</button>`
         : '';
       return `<div class="wh-item">
         ${iconEl}
