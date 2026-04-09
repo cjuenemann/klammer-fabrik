@@ -624,6 +624,21 @@ document.addEventListener('click', (e) => {
     if (machineId && typeof actionRemoveMachine === 'function') actionRemoveMachine(machineId);
     return;
   }
+  
+  // CLI sell buttons in modal
+  if (action === 'cli-sell-all') {
+    e.preventDefault();
+    const resource = target.dataset.resource;
+    if (resource && typeof cliSellAll === 'function') cliSellAll(resource);
+    return;
+  }
+  
+  if (action === 'cli-sell-half') {
+    e.preventDefault();
+    const resource = target.dataset.resource;
+    if (resource && typeof cliSellHalf === 'function') cliSellHalf(resource);
+    return;
+  }
 });
 </script>
 </body>

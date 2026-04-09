@@ -13,7 +13,9 @@ const UI = (() => {
 
   function wireStaticEvents() {
     document.getElementById('btn-save')?.addEventListener('click', () => { saveGame(); showNotif('Gespeichert!'); });
-    document.getElementById('btn-cli')?.addEventListener('click', () => openCLI(STATE));
+    document.getElementById('btn-cli')?.addEventListener('click', () => {
+      if (typeof STATE !== 'undefined') openCLI(STATE);
+    });
     document.getElementById('btn-reset')?.addEventListener('click', () => {
       const overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
@@ -40,7 +42,7 @@ const UI = (() => {
     // Warehouse click to open sell modal
     document.getElementById('warehouse-grid')?.addEventListener('click', (e) => {
       if (e.target.closest('button')) return; // Don't open if clicking a button
-      openSellModal(STATE);
+      if (typeof STATE !== 'undefined') openSellModal(STATE);
     });
   }
 
@@ -1568,23 +1570,28 @@ const UI = (() => {
     if (!el) return;
     
     const commands = [
-      { name: 'Geld', cmd: 'STATE.money += 1000', desc: '+€1000' },
-      { name: 'Ops', cmd: 'STATE.research.ops += 500', desc: '+500 Ops' },
-      { name: 'Stahlcoils', cmd: 'Production.addToWarehouse(STATE, "steelCoil", 10)', desc: '+10 Stahlcoils' },
-      { name: 'Draht', cmd: 'Production.addToWarehouse(STATE, "wire", 50)', desc: '+50m Draht' },
-      { name: 'Klammern', cmd: 'Production.addToWarehouse(STATE, "clip", 100)', desc: '+100 Klammern' },
-      { name: 'Maschinen-Übersicht', cmd: 'console.table(STATE.production.machines)', desc: 'Alle Maschinen anzeigen' },
-      { name: 'Lager anzeigen', cmd: 'console.table(STATE.production.warehouse)', desc: 'Lager anzeigen' },
-      { name: 'Research abschließen', cmd: 'Research.getAvailable(STATE).forEach(p => { STATE.research.ops += p.ops; Research.startProject(STATE, p.id); }); UI.renderResearch(STATE);', desc: 'Alle Forschungen starten' },
+      { name: 'Geld', cmd: 'addMoney(1000)', desc: '+€1000 (in Console eingeben)' },
+      { name: 'Ops', cmd: 'addOps(500)', desc: '+500 Ops' },
+      { name: 'Stahlcoils', cmd: 'addResource("steelCoil", 10)', desc: '+10 Stahlcoils ins Lager' },
+      { name: 'Draht', cmd: 'addResource("wire", 50)', desc: '+50m Draht ins Lager' },
+      { name: 'Klammern', cmd: 'addResource("clip", 100)', desc: '+100 Klammern ins Lager' },
+      { name: 'Lager anzeigen', cmd: 'console.log(JSON.stringify(STATE.production.warehouse, null, 2))', desc: 'Lager in Console' },
+      { name: 'Maschinen', cmd: 'console.log(JSON.stringify(STATE.production.machines.map(m => ({id: m.id, type: m.recipeId})), null, 2))', desc: 'Maschinen in Console' },
     ];
     
-    el.innerHTML = commands.map(c => `
-      <div style="margin-bottom:8px;padding:8px;background:var(--bg-panel);border-radius:4px">
-        <div style="font-weight:600;margin-bottom:4px">${c.name}</div>
-        <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:4px">${c.desc}</div>
-        <code style="display:block;padding:6px;background:var(--bg-base);border-radius:3px;font-size:.75rem;cursor:pointer" onclick="navigator.clipboard.writeText(this.textContent.trim())">${c.cmd}</code>
+    el.innerHTML = `
+      <div style="margin-bottom:12px;padding:8px;background:var(--bg-panel);border-radius:4px;border-left:3px solid var(--accent-amber)">
+        <div style="font-weight:600;margin-bottom:4px">💡 So nutzt du die CLI:</div>
+        <div style="font-size:.75rem;color:var(--text-muted)">1. Klicke auf einen Befehl zum Kopieren<br>2. Öffne Console (F12)<br>3. Füge ein (Strg+V) und Enter</div>
       </div>
-    `).join('');
+      ${commands.map(c => `
+        <div style="margin-bottom:8px;padding:8px;background:var(--bg-panel);border-radius:4px">
+          <div style="font-weight:600;margin-bottom:2px">${c.name}</div>
+          <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:4px">${c.desc}</div>
+          <code style="display:block;padding:6px;background:var(--bg-base);border-radius:3px;font-size:.75rem;cursor:pointer" onclick="copyToClipboard(this.textContent.trim())">${c.cmd}</code>
+        </div>
+      `).join('')}
+    `;
     
     document.getElementById('modal-cli')?.classList.remove('hidden');
   }
@@ -1611,8 +1618,8 @@ const UI = (() => {
           <div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--border)">
             <span style="flex:1">${meta.name}</span>
             <span style="font-size:.75rem;color:var(--text-muted)">${fmt(qty,0)} Stk @ ${fmtMoney(price)}</span>
-            <button class="btn btn-sm btn-amber" onclick="cliSellAll('${id}')">Alles</button>
-            <button class="btn btn-sm" onclick="cliSellHalf('${id}')">50%</button>
+            <button class="btn btn-sm btn-amber" data-action="cli-sell-all" data-resource="${id}">Alles</button>
+            <button class="btn btn-sm" data-action="cli-sell-half" data-resource="${id}">50%</button>
           </div>
         `;
       }).join('');
@@ -1627,23 +1634,25 @@ const UI = (() => {
 
   function cliSellAll(resourceId) {
     const qty = Math.floor(STATE.production?.warehouse?.[resourceId] || 0);
-    if (qty <= 0) return;
+    if (qty <= 0) { showNotif('Nichts zum Verkaufen', 'warn'); return; }
     const result = Market.sellProduct(STATE, resourceId, qty);
     if (result.ok) {
       showNotif(`${result.sold}× verkauft für ${fmtMoney(result.earned)}`);
       renderWarehouse(STATE);
       openSellModal(STATE);
+      saveGame();
     }
   }
 
   function cliSellHalf(resourceId) {
     const qty = Math.floor((STATE.production?.warehouse?.[resourceId] || 0) / 2);
-    if (qty <= 0) return;
+    if (qty <= 0) { showNotif('Nichts zum Verkaufen', 'warn'); return; }
     const result = Market.sellProduct(STATE, resourceId, qty);
     if (result.ok) {
       showNotif(`${result.sold}× verkauft für ${fmtMoney(result.earned)}`);
       renderWarehouse(STATE);
       openSellModal(STATE);
+      saveGame();
     }
   }
 
