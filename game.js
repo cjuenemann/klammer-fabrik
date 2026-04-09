@@ -158,15 +158,12 @@ function actionBuyResource(resource, qty) {
 }
 
 function actionSell(resource) {
-  console.log('actionSell called:', resource);
   const qty = Math.floor(STATE.production?.warehouse?.[resource] || 0);
-  console.log('qty:', qty);
   if (qty <= 0) {
     showNotif('Nichts zum Verkaufen', 'warn');
     return;
   }
   const result = Market.sellProduct(STATE, resource, qty);
-  console.log('result:', result);
   if (result.ok) {
     const meta = RESOURCE_META[resource];
     showNotif(`${result.sold}× ${meta.name} für ${fmtMoney(result.earned)} verkauft`);

@@ -156,7 +156,7 @@ const UI = (() => {
         ? `<svg class="res-icon" style="color:${color};width:14px;height:14px;flex-shrink:0" aria-hidden="true"><use href="#${meta.icon}"/></svg>`
         : `<div class="wh-dot" style="background:${color}"></div>`;
       const sellBtn = meta.sell && qty > 0
-        ? `<button class="btn btn-sm btn-amber" style="margin-left:4px;font-size:.65rem;padding:1px 6px" onclick="actionSell('${id}')">Verkauf</button>`
+        ? `<button class="btn btn-sm btn-amber sell-btn" data-resource="${id}" style="margin-left:4px;font-size:.65rem;padding:1px 6px">Verkauf</button>`
         : '';
       return `<div class="wh-item">
         ${iconEl}
@@ -165,6 +165,14 @@ const UI = (() => {
         ${sellBtn}
       </div>`;
     }).join('');
+
+    // Attach sell button listeners
+    el.querySelectorAll('.sell-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const resource = btn.dataset.resource;
+        actionSell(resource);
+      });
+    });
   }
 
   // ── Market ───────────────────────────────────────────────
