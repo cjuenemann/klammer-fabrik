@@ -143,6 +143,7 @@ function actionManualCollect(machineId) {
     if (Object.keys(collected).length > 0) anyCollected = true;
   }
   if (!anyCollected) showNotif('Output-Buffer ist leer', 'warn');
+  else UI.renderProduction(STATE);
 }
 
 function actionBuyResource(resource, qty) {
@@ -150,6 +151,7 @@ function actionBuyResource(resource, qty) {
   if (result.ok) {
     const meta = RESOURCE_META[resource];
     showNotif(`${qty}${meta.unit} ${meta.name} gekauft`);
+    UI.renderWarehouse(STATE);
   } else {
     showNotif(result.reason, 'error');
   }
@@ -158,11 +160,13 @@ function actionBuyResource(resource, qty) {
 function actionCrankGenerator(machineId) {
   const stack = getMachineStack(machineId);
   stack.forEach(m => Production.crankGenerator(STATE, m.id));
+  UI.renderProduction(STATE);
 }
 
 function actionCrankWireDrawer(machineId) {
   const stack = getMachineStack(machineId);
   stack.forEach(m => Production.crankWireDrawer(STATE, m.id));
+  UI.renderProduction(STATE);
 }
 
 function getMachineStack(machineId) {
