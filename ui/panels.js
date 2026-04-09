@@ -1570,13 +1570,10 @@ const UI = (() => {
     if (!el) return;
     
     const commands = [
-      { name: 'Geld', cmd: 'addMoney(1000)', desc: '+€1000 (in Console eingeben)' },
-      { name: 'Ops', cmd: 'addOps(500)', desc: '+500 Ops' },
-      { name: 'Stahlcoils', cmd: 'addResource("steelCoil", 10)', desc: '+10 Stahlcoils ins Lager' },
-      { name: 'Draht', cmd: 'addResource("wire", 50)', desc: '+50m Draht ins Lager' },
-      { name: 'Klammern', cmd: 'addResource("clip", 100)', desc: '+100 Klammern ins Lager' },
-      { name: 'Lager anzeigen', cmd: 'console.log(JSON.stringify(STATE.production.warehouse, null, 2))', desc: 'Lager in Console' },
-      { name: 'Maschinen', cmd: 'console.log(JSON.stringify(STATE.production.machines.map(m => ({id: m.id, type: m.recipeId})), null, 2))', desc: 'Maschinen in Console' },
+      { name: 'Lager anzeigen', cmd: 'console.log(JSON.stringify(STATE.production.warehouse, null, 2))', desc: 'Zeigt Lagerinhalt' },
+      { name: 'Maschinen', cmd: 'console.log(JSON.stringify(STATE.production.machines.map(m => ({id: m.id, type: m.recipeId, buffers: m.inputBuffer})), null, 2))', desc: 'Zeigt Maschinen-Status' },
+      { name: 'Spielstand', cmd: 'console.log("Geld:", STATE.money, "Ops:", STATE.research.ops, "Trust:", STATE.trust)', desc: 'Zeigt wichtige Stats' },
+      { name: 'Alle Forschungen', cmd: 'console.table(Research.getAll())', desc: 'Liste aller Forschungen' },
     ];
     
     el.innerHTML = `

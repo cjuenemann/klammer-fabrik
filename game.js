@@ -322,15 +322,9 @@ window.actionSetPrice = actionSetPrice;
 window.actionStartResearch = actionStartResearch;
 
 // CLI helper functions (copy-paste templates)
-function addMoney(amount) { STATE.money += amount; logEvent(`+${fmtMoney(amount)}`); UI.renderHeader && UI.renderHeader(STATE); }
-function addOps(amount) { STATE.research.ops += amount; logEvent(`+${amount} Ops`); }
-function addResource(resource, amount) { Production.addToWarehouse(STATE, resource, amount); logEvent(`+${amount} ${RESOURCE_META[resource]?.name || resource}`); }
 function copyToClipboard(text) { navigator.clipboard.writeText(text); showNotif('Kopiert!'); }
 
 // Make CLI helpers globally available
-window.addMoney = addMoney;
-window.addOps = addOps;
-window.addResource = addResource;
 window.copyToClipboard = copyToClipboard;
 
 window.addEventListener('keydown', (e) => {
