@@ -82,13 +82,12 @@ const Production = (() => {
   // Manual: push resources from warehouse into machine input buffer
   function manualFeed(state, machineId, resource, qty) {
     const mach = state.production.machines.find(m => m.id === machineId);
-    if (!mach) { console.log('Machine not found:', machineId); return 0; }
+    if (!mach) return 0;
     const recipe = RECIPES[mach.recipeId];
     const capacity = recipe.inputCapacity[resource] || 0;
     const current  = mach.inputBuffer[resource] || 0;
     const space    = capacity - current;
     const whAmount = state.production.warehouse[resource] || 0;
-    console.log('manualFeed:', { machineId, resource, qty, capacity, current, space, whAmount });
     const toMove   = Math.min(qty, space, whAmount);
     if (toMove <= 0) return 0;
     mach.inputBuffer[resource] = current + toMove;
