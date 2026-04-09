@@ -33,6 +33,13 @@ const Quests = (() => {
       reward: null,
     },
     {
+      id: 'q_verkauf_geld',
+      name: '💰 Verdiene Geld!',
+      desc: 'Verkaufe Klammern auf dem Markt (€0.25/Stk). Klicke auf eine Klammer im Lager und setze einen Preis.',
+      check: (state) => state.money >= 350,
+      reward: null,
+    },
+    {
       id: 'q_stanzen',
       name: '🔨 Baue die Stanzpresse',
       desc: 'Baue eine Stanzpresse, um Draht zu Rohlingen zu verarbeiten.',
