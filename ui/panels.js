@@ -12,7 +12,12 @@ const UI = (() => {
 
   function wireStaticEvents() {
     document.getElementById('btn-save')?.addEventListener('click', () => { saveGame(); showNotif('Gespeichert!'); });
-    document.getElementById('btn-reset')?.addEventListener('click', resetGame);
+    document.getElementById('btn-reset')?.addEventListener('click', () => {
+      if (window.confirm('Spielstand wirklich löschen und neu starten?')) {
+        Save.clear();
+        location.reload();
+      }
+    });
   }
 
   // ── Render dispatch (~30fps) ─────────────────────────────
