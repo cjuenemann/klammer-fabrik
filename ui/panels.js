@@ -156,7 +156,7 @@ const UI = (() => {
         ? `<svg class="res-icon" style="color:${color};width:14px;height:14px;flex-shrink:0" aria-hidden="true"><use href="#${meta.icon}"/></svg>`
         : `<div class="wh-dot" style="background:${color}"></div>`;
       const sellBtn = meta.sell && qty > 0
-        ? `<button class="btn btn-sm btn-amber" style="margin-left:4px;font-size:.65rem;padding:1px 6px" onclick="actionSell('${id}')">Verkauf</button>`
+        ? `<button class="btn btn-sm btn-amber" data-action="sell" data-resource="${id}" style="margin-left:4px;font-size:.65rem;padding:1px 6px">Verkauf</button>`
         : '';
       return `<div class="wh-item">
         ${iconEl}
@@ -185,7 +185,7 @@ const UI = (() => {
         return `<div class="buy-row" style="display:flex; align-items:center; gap:var(--gap-sm); padding: 8px 0; border-bottom: 1px solid var(--border-light);">
           <span class="form-label" style="flex:1; font-weight:600">${r.name}</span>
           <span class="form-value text-mono" style="width:110px; text-align:right; margin-right:var(--gap-md)">€${r.baseCost.toFixed(2)}/${r.buyUnit}</span>
-          <button class="btn btn-sm btn-amber" style="min-width:120px; font-weight:bold" onclick="actionBuyResource('${r.id}',${qty})"
+          <button class="btn btn-sm btn-amber" style="min-width:120px; font-weight:bold" data-action="buy-resource" data-resource="${r.id}" data-qty="${qty}"
             ${can ? '' : 'disabled'}>
             Kaufen ×${qty}<br><small>${fmtMoney(cost)}</small>
           </button>
@@ -225,8 +225,8 @@ const UI = (() => {
             <div class="text-mono" style="font-size:1.1rem; font-weight:bold">€${price.toFixed(2)}</div>
             <div style="font-size:.65rem; color:var(--text-muted); margin-top:2px">${fmt(inStock)} auf Lager</div>
             <div style="display:flex; gap:2px; justify-content: flex-end; margin-top:5px">
-              <button class="btn btn-sm btn-dark" onclick="actionSetPrice('${id}',-0.01)" style="padding:0 8px">−</button>
-              <button class="btn btn-sm btn-dark" onclick="actionSetPrice('${id}',+0.01)" style="padding:0 8px">+</button>
+              <button class="btn btn-sm btn-dark" onclick="actionSetPrice('${id}',-0.01); event.stopPropagation();" style="padding:0 8px">−</button>
+              <button class="btn btn-sm btn-dark" onclick="actionSetPrice('${id}',+0.01); event.stopPropagation();" style="padding:0 8px">+</button>
             </div>
           </div>
         </div>`;
@@ -384,7 +384,7 @@ const UI = (() => {
       
       // Update feed button state
       if (isInput) {
-        const btn = slot.querySelector('button[onclick^="actionManualFeed"]');
+        const btn = slot.querySelector('button[data-action="feed"]');
         if (btn) {
           btn.disabled = canFeed <= 0;
           btn.innerHTML = canFeed > 0 ? `&rsaquo; Zuführen (${fmt(canFeed, 0)})` : '&rsaquo; Zuführen';
@@ -469,7 +469,7 @@ const UI = (() => {
         <div class="buffer-bar"><div class="buffer-fill" style="width:${Math.round(ratio*100)}%;background:${meta.color||'#666'}"></div></div>
         <div class="buffer-nums"><span class="cur-val">${fmt(cur,1)}</span> / ${cap} &nbsp;<span style="color:#aaa;font-size:.65rem">(Lager: ${fmt(wh,0)})</span></div>
         ${!autoRoute ? `<button class="btn btn-sm" style="font-size:.62rem;padding:2px 6px" ${canFeed<=0?'disabled':''}
-          onclick="actionManualFeed(${mach.id},'${res}',${Math.floor(space)})">
+          data-action="feed" data-machine-id="${mach.id}" data-resource="${res}" data-qty="${Math.floor(space)}">
           &rsaquo; Zuführen${canFeed>0?' ('+fmt(canFeed,0)+')':''}
         </button>` : `<span class="badge" style="font-size:.6rem">AUTO</span>`}
       </div>`;
@@ -493,7 +493,7 @@ const UI = (() => {
         <div class="buffer-bar"><div class="buffer-fill" style="width:${Math.round(ratio*100)}%;background:${meta.color||'#666'}"></div></div>
         <div class="buffer-nums"><span class="cur-val">${fmt(cur,1)}</span> / ${cap}</div>
         ${!autoRoute ? `<button class="btn btn-sm btn-collect"
-          onclick="actionManualCollect(${mach.id})">
+          data-action="collect" data-machine-id="${mach.id}">
           &lsaquo; Abholen
         </button>` : `<span class="badge" style="font-size:.6rem">AUTO</span>`}
       </div>`;
@@ -518,7 +518,7 @@ const UI = (() => {
         <span class="machine-name" style="${isStacked ? 'padding-left:8px' : ''}">${mach.label}</span>
         <span class="machine-eff" style="color:${effColor}"><span class="eff-val">${effPct}%</span> ${recipe.isGenerator ? 'load' : 'eff.'}</span>
         <button class="btn btn-sm" style="font-size:.6rem;padding:1px 5px;margin-left:auto"
-          onclick="if(confirm('${removeConfirm}'))actionRemoveMachine(${mach.id})">${removeLabel}</button>
+          onclick="if(confirm('${removeConfirm}')){window.actionRemoveMachine(${mach.id})}">${removeLabel}</button>
       </div>
       <!-- ... (remaining same) -->
       <div class="machine-desc text-muted" style="display:flex;justify-content:space-between">
@@ -532,11 +532,11 @@ const UI = (() => {
         <div class="buffer-group">
           <div class="buffer-group-label">${recipe.isGenerator ? 'INPUT' : 'EINGANG'}</div>
           ${recipe.id === 'manualGenerator' ? 
-            `<button class="btn btn-amber" style="width:100%;height:30px;font-weight:bold" onclick="actionCrankGenerator(${mach.id})">${isStacked ? 'ALLE KURBELN' : 'KURBELN'}</button>` : 
+            `<button class="btn btn-amber" style="width:100%;height:30px;font-weight:bold" data-action="crank-generator" data-machine-id="${mach.id}">${isStacked ? 'ALLE KURBELN' : 'KURBELN'}</button>` : 
             recipe.id === 'manualWireDrawer' ?
             (() => {
               const hasInput = (mach.inputBuffer?.steelCoil || 0) >= 1;
-              return `<button class="btn btn-amber" style="width:100%;height:30px;font-weight:bold" onclick="actionCrankWireDrawer(${mach.id})" ${!hasInput ? 'disabled title="Kein Stahlcoil vorhanden"' : ''}>
+              return `<button class="btn btn-amber" style="width:100%;height:30px;font-weight:bold" data-action="crank-wire-drawer" data-machine-id="${mach.id}" ${!hasInput ? 'disabled title="Kein Stahlcoil vorhanden"' : ''}>
                 ${isStacked ? 'ALLE ZIEHEN' : 'ZIEHEN'}${!hasInput ? ' ❌' : ''}
               </button>`;
             })() :
@@ -588,7 +588,7 @@ const UI = (() => {
         html += `<div class="item-card">
           <div class="item-card-header">
             <span class="item-card-name">${recipe.name}</span>
-            <button class="btn btn-sm btn-primary" onclick="actionBuyMachine('${id}')" ${can?'':'disabled'}>
+            <button class="btn btn-sm btn-primary" data-action="buy-machine" data-recipe-id="${id}" ${can?'':'disabled'}>
               Bauen
             </button>
           </div>
@@ -667,7 +667,7 @@ const UI = (() => {
             <div class="item-card-header">
               <span class="item-card-name">${proj.name}</span>
               <button class="btn btn-sm btn-primary"
-                onclick="actionStartResearch('${proj.id}')"
+                data-action="start-research" data-research-id="${proj.id}"
                 ${affordable && !active ? '' : 'disabled'}>Starten</button>
             </div>
             <div class="item-card-desc">${proj.desc}</div>

@@ -519,6 +519,80 @@ document.getElementById('rt-to-type')?.addEventListener('change', () => {
   const v = document.getElementById('rt-to-type').value;
   document.getElementById('rt-to-machine').style.display = v === 'machine' ? '' : 'none';
 });
+
+// ── Centralized event delegation for game actions ───────────
+document.addEventListener('click', (e) => {
+  const target = e.target.closest('[data-action]');
+  if (!target) return;
+  
+  const action = target.dataset.action;
+  
+  if (action === 'sell') {
+    e.preventDefault();
+    const resource = target.dataset.resource;
+    if (resource && typeof actionSell === 'function') actionSell(resource);
+    return;
+  }
+  
+  if (action === 'buy-machine') {
+    e.preventDefault();
+    const recipeId = target.dataset.recipeId;
+    if (recipeId && typeof actionBuyMachine === 'function') actionBuyMachine(recipeId);
+    return;
+  }
+  
+  if (action === 'feed') {
+    e.preventDefault();
+    const machineId = parseInt(target.dataset.machineId);
+    const resource = target.dataset.resource;
+    const qty = parseInt(target.dataset.qty);
+    if (machineId && resource && typeof actionManualFeed === 'function') actionManualFeed(machineId, resource, qty);
+    return;
+  }
+  
+  if (action === 'collect') {
+    e.preventDefault();
+    const machineId = parseInt(target.dataset.machineId);
+    if (machineId && typeof actionManualCollect === 'function') actionManualCollect(machineId);
+    return;
+  }
+  
+  if (action === 'crank-generator') {
+    e.preventDefault();
+    const machineId = parseInt(target.dataset.machineId);
+    if (machineId && typeof actionCrankGenerator === 'function') actionCrankGenerator(machineId);
+    return;
+  }
+  
+  if (action === 'crank-wire-drawer') {
+    e.preventDefault();
+    const machineId = parseInt(target.dataset.machineId);
+    if (machineId && typeof actionCrankWireDrawer === 'function') actionCrankWireDrawer(machineId);
+    return;
+  }
+  
+  if (action === 'start-research') {
+    e.preventDefault();
+    const researchId = target.dataset.researchId;
+    if (researchId && typeof actionStartResearch === 'function') actionStartResearch(researchId);
+    return;
+  }
+  
+  if (action === 'buy-resource') {
+    e.preventDefault();
+    const resource = target.dataset.resource;
+    const qty = parseInt(target.dataset.qty);
+    if (resource && qty && typeof actionBuyResource === 'function') actionBuyResource(resource, qty);
+    return;
+  }
+  
+  if (action === 'remove-machine') {
+    e.preventDefault();
+    const machineId = parseInt(target.dataset.machineId);
+    if (machineId && typeof actionRemoveMachine === 'function') actionRemoveMachine(machineId);
+    return;
+  }
+});
 </script>
 </body>
 </html>
