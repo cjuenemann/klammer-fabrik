@@ -128,6 +128,18 @@ const UI = (() => {
     const el  = document.getElementById('warehouse-grid');
     if (!el) return;
 
+    // Attach delegated click handler once
+    if (!el.dataset.sellHandler) {
+      el.addEventListener('click', (e) => {
+        const btn = e.target.closest('.sell-btn');
+        if (btn) {
+          const resource = btn.dataset.resource;
+          if (window.actionSell) window.actionSell(resource);
+        }
+      });
+      el.dataset.sellHandler = '1';
+    }
+
     const entries = Object.entries(RESOURCE_META)
       .filter(([id]) => (wh[id] || 0) > 0 || state.upgrades?.[RESOURCE_META[id].unlockResearch] !== undefined)
       .filter(([, meta]) => {
@@ -165,14 +177,6 @@ const UI = (() => {
         ${sellBtn}
       </div>`;
     }).join('');
-
-    // Attach sell button listeners
-    el.querySelectorAll('.sell-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const resource = btn.dataset.resource;
-        actionSell(resource);
-      });
-    });
   }
 
   // ── Market ───────────────────────────────────────────────
