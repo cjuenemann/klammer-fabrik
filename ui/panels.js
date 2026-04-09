@@ -13,10 +13,26 @@ const UI = (() => {
   function wireStaticEvents() {
     document.getElementById('btn-save')?.addEventListener('click', () => { saveGame(); showNotif('Gespeichert!'); });
     document.getElementById('btn-reset')?.addEventListener('click', () => {
-      if (window.confirm('Spielstand wirklich löschen und neu starten?')) {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+      overlay.innerHTML = `<div style="background:#1a1a2e;padding:24px;border-radius:8px;text-align:center;color:#e0e0e0;min-width:300px;">
+        <div style="margin-bottom:16px;font-size:1.1rem;">Spielstand wirklich löschen<br>und neu starten?</div>
+        <div style="display:flex;gap:12px;justify-content:center;">
+          <button id="reset-confirm-yes" style="padding:8px 20px;background:#c0392b;color:white;border:none;border-radius:4px;cursor:pointer;">Ja, neustarten</button>
+          <button id="reset-confirm-no" style="padding:8px 20px;background:#555;color:white;border:none;border-radius:4px;cursor:pointer;">Abbrechen</button>
+        </div>
+      </div>`;
+      document.body.appendChild(overlay);
+      document.getElementById('reset-confirm-yes').onclick = () => {
         Save.clear();
         location.reload();
-      }
+      };
+      document.getElementById('reset-confirm-no').onclick = () => {
+        document.body.removeChild(overlay);
+      };
+      overlay.onclick = (e) => {
+        if (e.target === overlay) document.body.removeChild(overlay);
+      };
     });
   }
 
