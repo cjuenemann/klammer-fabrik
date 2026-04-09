@@ -238,6 +238,7 @@ function loadGame() {
     Production.init(STATE);
     Research.init(STATE);
     Logistics.init(STATE);
+    Quests.init(STATE);
     logEvent('Spielstand geladen');
     return true;
   }

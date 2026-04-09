@@ -40,7 +40,12 @@ const UI = (() => {
   function renderQuests(state) {
     const el = document.getElementById('quest-list');
     const progressEl = document.getElementById('quest-progress');
-    if (!el || !state.quests) return;
+    if (!el) return;
+    
+    // Initialize quests if missing (for old save files)
+    if (!state.quests) {
+      Quests.init(state);
+    }
     
     const active = Quests.getActiveQuests(state);
     const completed = Quests.getCompletedQuests(state);
