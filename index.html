@@ -522,15 +522,24 @@ document.getElementById('rt-to-type')?.addEventListener('change', () => {
 
 // ── Centralized event delegation for game actions ───────────
 document.addEventListener('click', (e) => {
+  console.log('Click event triggered', e.target);
   const target = e.target.closest('[data-action]');
-  if (!target) return;
+  if (!target) {
+    console.log('No data-action found on clicked element');
+    return;
+  }
   
+  console.log('Found target with data-action:', target.dataset.action);
   const action = target.dataset.action;
   
   if (action === 'sell') {
     e.preventDefault();
-    const resource = target.dataset.resource;
-    if (resource && typeof actionSell === 'function') actionSell(resource);
+    console.log('Sell action triggered for:', target.dataset.resource);
+    if (target.dataset.resource && typeof actionSell === 'function') {
+      actionSell(target.dataset.resource);
+    } else {
+      console.log('actionSell not found or no resource');
+    }
     return;
   }
   
