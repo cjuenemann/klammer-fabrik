@@ -4,7 +4,7 @@
 
 function createInitialState() {
   return {
-    money:          444,    // starting buffer
+    money:          2000,   // comfortable starting money
     totalProduced:  0,
     totalClipsSold: 0,
     phase:          1,
