@@ -36,6 +36,41 @@ const UI = (() => {
     });
   }
 
+  // ── Quests ────────────────────────────────────────────────
+  function renderQuests(state) {
+    const el = document.getElementById('quest-list');
+    const progressEl = document.getElementById('quest-progress');
+    if (!el || !state.quests) return;
+    
+    const active = Quests.getActiveQuests(state);
+    const completed = Quests.getCompletedQuests(state);
+    const total = Quests.QUESTS.length;
+    
+    if (progressEl) {
+      progressEl.textContent = `${completed.length}/${total}`;
+    }
+    
+    // Show current active quest
+    if (active.length === 0 && completed.length >= total) {
+      el.innerHTML = `<div style="color:var(--accent-green);font-size:.8rem;text-align:center;padding:8px">
+        🎉 Alle Quests abgeschlossen!
+      </div>`;
+      return;
+    }
+    
+    const nextQuest = Quests.getNextQuest(state);
+    if (!nextQuest) {
+      el.innerHTML = `<div class="text-muted" style="font-size:.75rem">Alle Quests abgeschlossen!</div>`;
+      return;
+    }
+    
+    el.innerHTML = `<div class="quest-item" style="padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="font-weight:600;font-size:.85rem;margin-bottom:2px">${nextQuest.name}</div>
+      <div style="font-size:.75rem;color:var(--text-muted)">${nextQuest.desc}</div>
+    </div>
+    ${completed.length > 0 ? `<div style="margin-top:8px;font-size:.7rem;color:var(--text-muted)">Abgeschlossen: ${completed.length}</div>` : ''}`;
+  }
+
   // ── Render dispatch (~30fps) ─────────────────────────────
   function render(state) {
     const now = performance.now();
@@ -48,6 +83,7 @@ const UI = (() => {
     renderProduction(state);
     renderResearch(state);
     renderLogRoutes(state);
+    renderQuests(state);
     renderLog();
     renderPhase(state);
 

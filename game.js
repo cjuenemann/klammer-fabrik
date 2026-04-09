@@ -85,6 +85,7 @@ function gameTick(timestamp) {
   Market.tick(STATE, dt);
   Production.tick(STATE, dt);
   Logistics.tick(STATE, dt);
+  Quests.tick(STATE);
   const researchResult = Research.tick(STATE, dt);
   if (researchResult?.completed) {
     logEvent(`✅ Forschung: ${researchResult.completed.name}`, 'info');
@@ -251,6 +252,7 @@ function resetGame() {
   Production.init(STATE);
   Research.init(STATE);
   Logistics.init(STATE);
+  Quests.init(STATE);
   logEvent('🔄 Neues Spiel gestartet');
 }
 
@@ -260,6 +262,7 @@ function bootGame() {
   Production.init(STATE);
   Research.init(STATE);
   Logistics.init(STATE);
+  Quests.init(STATE);
   loadGame();
   UI.build(STATE);
   running = true;

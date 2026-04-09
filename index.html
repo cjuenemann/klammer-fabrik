@@ -290,6 +290,14 @@
   <!-- ═══ COLUMN 1: Status & Markt ═══ -->
   <div style="display:flex;flex-direction:column;gap:var(--gap-md)">
 
+    <!-- Quests -->
+    <div class="panel" id="quest-panel">
+      <div class="panel-title">📋 Quests <span id="quest-progress" style="font-weight:normal;font-size:.75rem"></span></div>
+      <div class="panel-body" id="quest-list" style="padding:8px 12px">
+        <div class="text-muted" style="font-size:.75rem">Lädt...</div>
+      </div>
+    </div>
+
     <!-- Lager -->
     <div class="panel">
       <div class="panel-title">Lager</div>
@@ -483,6 +491,7 @@
 <script src="systems/production.js"></script>
 <script src="systems/research.js"></script>
 <script src="systems/logistics.js"></script>
+<script src="systems/quests.js"></script>
 <script src="ui/panels.js"></script>
 <script src="game.js"></script>
 
