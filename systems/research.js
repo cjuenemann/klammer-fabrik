@@ -373,6 +373,7 @@ const Research = (() => {
 
   function startProject(state, id) {
     if (state.research.active) return { ok:false, reason:'Projekt bereits aktiv' };
+    if (state.research.completed.includes(id)) return { ok:false, reason:'Bereits abgeschlossen' };
     const proj = PROJECTS.find(p => p.id === id);
     if (!proj) return { ok:false, reason:'Projekt nicht gefunden' };
     

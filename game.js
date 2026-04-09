@@ -174,10 +174,16 @@ function actionSetPrice(productId, delta) {
 function actionStartResearch(id) {
   const proj = Research.getAll().find(p => p.id === id);
   if (!proj) return;
+  
+  // Prevent double-clicks: ignore if already completed or active
+  if (STATE.research?.completed?.includes(id)) return;
+  if (STATE.research?.active?.id === id) return;
+  
   const result = Research.startProject(STATE, id);
   if (result.ok) {
     if (result.instant) logEvent(`✅ ${proj.name} sofort abgeschlossen`);
     else logEvent(`Forschung gestartet: ${proj.name}`);
+    UI.renderResearch(STATE);
   } else {
     showNotif(result.reason, 'warn');
   }
