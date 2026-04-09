@@ -171,8 +171,8 @@ const Production = (() => {
 
     // Manual generator doesn't consume fuels or run by itself
     if (recipe.id === 'manualGenerator') {
-      // Decay manual power over time
-      mach.outputBuffer.powerGrid = Math.max(0, (mach.outputBuffer.powerGrid || 0) - 10 * dt);
+      // Decay manual power over time (slower: 2W/s)
+      mach.outputBuffer.powerGrid = Math.max(0, (mach.outputBuffer.powerGrid || 0) - 2 * dt);
       mach.efficiency = (mach.outputBuffer.powerGrid || 0) > 0 ? 1 : 0;
       return;
     }

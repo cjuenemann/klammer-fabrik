@@ -380,10 +380,13 @@ const UI = (() => {
     if (recipe.id === 'manualGenerator') {
       const curPower = group.reduce((acc, m) => acc + (m.outputBuffer?.powerGrid || 0), 0);
       const capPower = (recipe.outputCapacity?.powerGrid || 150) * count;
-      const fill = card.querySelector('.buffer-fill');
-      if (fill) fill.style.width = Math.round(Math.min(1, curPower / capPower)) + '%';
-      const val = card.querySelector('.buffer-nums'); // no span here, just update whole line or find text node
-      if (val) val.textContent = `${fmt(curPower,0)}W / ${capPower}W`;
+      const pRatio = Math.min(1, curPower / capPower);
+      // Find the specific buffer-fill in the OUTPUT section (has background #f1c40f)
+      const outputSlot = card.querySelector('.buffer-group:last-child .buffer-slot');
+      const fill = outputSlot?.querySelector('.buffer-fill');
+      if (fill) fill.style.width = Math.round(pRatio * 100) + '%';
+      const nums = outputSlot?.querySelector('.buffer-nums');
+      if (nums) nums.textContent = `${fmt(curPower,0)}W / ${capPower}W`;
     }
 
     // Special case: manual wire drawer
