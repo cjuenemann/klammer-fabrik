@@ -41,7 +41,7 @@ const Research = (() => {
     // ROW 0: Mechanik (col 0-2) + Logistik (col 3-4)
     P('manualWireDraw','Hand-Ziehbank','Mechanik',
       'Schaltet die Hand-Ziehbank frei — manuelle Drahtproduktion ohne Strom',
-      {ops:100}, 5, [], ['manualWireDraw'], 0, 0, null,
+      {ops:100}, 0, [], ['manualWireDraw'], 0, 0, null,
       s => { s.upgrades.manualWireDraw = true; }),
 
     P('revTracker','Umsatz-Tracker','Mechanik',
