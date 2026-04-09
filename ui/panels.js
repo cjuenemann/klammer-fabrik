@@ -155,10 +155,14 @@ const UI = (() => {
       const iconEl = meta.icon
         ? `<svg class="res-icon" style="color:${color};width:14px;height:14px;flex-shrink:0" aria-hidden="true"><use href="#${meta.icon}"/></svg>`
         : `<div class="wh-dot" style="background:${color}"></div>`;
+      const sellBtn = meta.sell && qty > 0
+        ? `<button class="btn btn-sm btn-amber" style="margin-left:4px;font-size:.65rem;padding:1px 6px" onclick="actionSell('${id}')">Verkauf</button>`
+        : '';
       return `<div class="wh-item">
         ${iconEl}
         <div class="wh-name">${meta.name}</div>
         <div class="wh-qty">${fmt(qty, qty < 10 ? 1 : 0)} ${meta.unit}</div>
+        ${sellBtn}
       </div>`;
     }).join('');
   }

@@ -157,6 +157,22 @@ function actionBuyResource(resource, qty) {
   }
 }
 
+function actionSell(resource) {
+  const qty = Math.floor(STATE.production?.warehouse?.[resource] || 0);
+  if (qty <= 0) {
+    showNotif('Nichts zum Verkaufen', 'warn');
+    return;
+  }
+  const result = Market.sellProduct(STATE, resource, qty);
+  if (result.ok) {
+    const meta = RESOURCE_META[resource];
+    showNotif(`${result.sold}× ${meta.name} für ${fmtMoney(result.earned)} verkauft`);
+    UI.renderWarehouse(STATE);
+  } else {
+    showNotif(result.reason, 'error');
+  }
+}
+
 function actionCrankGenerator(machineId) {
   const stack = getMachineStack(machineId);
   stack.forEach(m => Production.crankGenerator(STATE, m.id));

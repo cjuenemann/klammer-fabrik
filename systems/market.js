@@ -35,38 +35,38 @@ const Market = (() => {
     const wh  = state.production.warehouse;
     const mkt = state.upgrades?.marketingMult || 1;
 
-    // Sell each sellable product from warehouse
+    // Only update demand curve (no auto-sell)
     for (const [productId, def] of Object.entries(SELLABLE)) {
-      // Skip if not yet visible
-      if (!wh[productId] && (wh[productId] || 0) === 0) continue;
-
       const price  = m.prices[productId] || def.basePrice;
-      const demand = m.demand[productId] || 0;
-
-      // Demand curve: drops with high price, boosted by marketing
       const naturalDemand = Math.max(0, Math.min(1,
         def.demandBase * mkt * (1 - (price - def.basePrice) / (def.basePrice * 4))
         + (Math.random() - 0.5) * 0.03
       ));
       m.demand[productId] = naturalDemand;
-
-      // Sell rate: demand * some scale
-      const sellPerSec = naturalDemand * 50 * dt;
-      const toSell     = Math.min(wh[productId] || 0, sellPerSec);
-      if (toSell > 0) {
-        wh[productId]       = (wh[productId] || 0) - toSell;
-        const earned         = toSell * price;
-        state.money         += earned;
-        m.revenue           += earned;
-        m.totalSold[productId] = (m.totalSold[productId] || 0) + toSell;
-        state.totalClipsSold   = (state.totalClipsSold || 0) + toSell;
-      }
     }
 
     // Auto-buy raw materials
     if (state.upgrades?.autoBuyer) {
       autoBuyTick(state, dt);
     }
+  }
+
+  // Manual sell function
+  function sellProduct(state, productId, qty) {
+    const m  = state.market;
+    const wh = state.production.warehouse;
+    const available = wh[productId] || 0;
+    const toSell = Math.min(qty, available);
+    if (toSell <= 0) return { ok: false, reason: 'Nicht genug im Lager' };
+
+    const price = m.prices[productId] || SELLABLE[productId]?.basePrice || 0;
+    wh[productId] = available - toSell;
+    const earned = toSell * price;
+    state.money += earned;
+    m.revenue += earned;
+    m.totalSold[productId] = (m.totalSold[productId] || 0) + toSell;
+    state.totalClipsSold = (state.totalClipsSold || 0) + toSell;
+    return { ok: true, sold: toSell, earned };
   }
 
   function autoBuyTick(state, dt) {
@@ -107,5 +107,5 @@ const Market = (() => {
       .map(([id, m]) => ({ id, ...m }));
   }
 
-  return { init, tick, buyResource, setPrice, setAutoBuyOrder, getBuyableMaterials };
+  return { init, tick, buyResource, sellProduct, setPrice, setAutoBuyOrder, getBuyableMaterials };
 })();
