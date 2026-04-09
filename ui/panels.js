@@ -1573,7 +1573,7 @@ const UI = (() => {
       { name: 'Lager anzeigen', cmd: 'console.log(JSON.stringify(STATE.production.warehouse, null, 2))', desc: 'Zeigt Lagerinhalt' },
       { name: 'Maschinen', cmd: 'console.log(JSON.stringify(STATE.production.machines.map(m => ({id: m.id, type: m.recipeId, buffers: m.inputBuffer})), null, 2))', desc: 'Zeigt Maschinen-Status' },
       { name: 'Spielstand', cmd: 'console.log("Geld:", STATE.money, "Ops:", STATE.research.ops, "Trust:", STATE.trust)', desc: 'Zeigt wichtige Stats' },
-      { name: 'Alle Forschungen', cmd: 'console.table(Research.getAll())', desc: 'Liste aller Forschungen' },
+      { name: 'Verkaufen (Alle Klammern)', cmd: 'cliSellAll("clip")', desc: 'Verkauft alle Klammern' },
     ];
     
     el.innerHTML = `
