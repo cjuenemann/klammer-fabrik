@@ -373,11 +373,23 @@ const UI = (() => {
       const isInput = !!recipe.inputs[res];
       const cap = (isInput ? (recipe.inputCapacity?.[res]||10) : (recipe.outputCapacity?.[res]||50)) * count;
       const cur = group.reduce((acc, m) => acc + ((isInput ? m.inputBuffer : m.outputBuffer)[res] || 0), 0);
+      const wh = isInput ? (state.production?.warehouse?.[res] || 0) : 0;
+      const space = cap - cur;
+      const canFeed = Math.min(wh, Math.floor(space));
       
       const fill = slot.querySelector('.buffer-fill');
       if (fill) fill.style.width = Math.round(Math.min(1, cur / cap) * 100) + '%';
       const val = slot.querySelector('.cur-val');
       if (val) val.textContent = fmt(cur, 1);
+      
+      // Update feed button state
+      if (isInput) {
+        const btn = slot.querySelector('button[onclick^="actionManualFeed"]');
+        if (btn) {
+          btn.disabled = canFeed <= 0;
+          btn.innerHTML = canFeed > 0 ? `&rsaquo; Zuführen (${fmt(canFeed, 0)})` : '&rsaquo; Zuführen';
+        }
+      }
     });
 
     // Special case: manual generator output
