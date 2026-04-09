@@ -522,14 +522,9 @@ document.getElementById('rt-to-type')?.addEventListener('change', () => {
 
 // ── Centralized event delegation for game actions ───────────
 document.addEventListener('click', (e) => {
-  console.log('Click event triggered', e.target);
   const target = e.target.closest('[data-action]');
-  if (!target) {
-    console.log('No data-action found on clicked element');
-    return;
-  }
+  if (!target) return;
   
-  console.log('Found target with data-action:', target.dataset.action);
   const action = target.dataset.action;
   
   if (action === 'sell') {
