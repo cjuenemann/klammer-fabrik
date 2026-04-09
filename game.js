@@ -4,7 +4,7 @@
 
 function createInitialState() {
   return {
-    money:          200,    // enough for first machines before selling
+    money:          444,    // starting buffer
     totalProduced:  0,
     totalClipsSold: 0,
     phase:          1,
