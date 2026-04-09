@@ -402,7 +402,7 @@ const RECIPES = {
 // market: true = can be bought; sell: true = auto-sells to market
 const RESOURCE_META = {
   // Buyable raw materials
-  steelCoil:       { name: 'Stahlcoil',          unit: 'Stk', color: '#5a6070', market: true,  baseCost: 15,    buyUnit: 'Stk',  icon: 'icon-coil' },
+  steelCoil:       { name: 'Stahlcoil',          unit: 'Stk', color: '#5a6070', market: true,  baseCost: 10,    buyUnit: 'Stk',  icon: 'icon-coil' },
   coal:            { name: 'Kohle',              unit: 'kg',  color: '#333333', market: true,  baseCost: 2,     buyUnit: '10kg', buyQty: 10, icon: 'icon-coal' },
   plasticGranule:  { name: 'Kunststoff-Granulat', unit: 'kg', color: '#7a5a8a', market: true,  baseCost: 8,     buyUnit: 'kg',   icon: 'icon-granule' },
   chemBase:        { name: 'Chemikalienbasis',    unit: 'L',  color: '#5a8a7a', market: true,  baseCost: 25,    buyUnit: 'L',    icon: 'icon-flask' },
