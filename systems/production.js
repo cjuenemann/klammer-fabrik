@@ -4,9 +4,6 @@
 // ============================================================
 const Production = (() => {
 
-  // Products that can be sold at marketplace
-  const MARKETABLE = ['clip', 'premiumClip', 'hybridClip', 'steelCoil', 'wire', 'copperWire'];
-
   let _nextMachineId = 1;
 
   function init(state) {
@@ -253,58 +250,57 @@ const Production = (() => {
   function tickMarketplace(state, mach, dt) {
     const recipe = RECIPES.marketplace;
     const m = state.market;
+    const cap = recipe.inputCapacity || 1000;
     
-    // Händler kommen zufällig vorbei (ca. alle 30-60 Sekunden im Schnitt)
-    if (Math.random() < 0.1 * dt) { // ~10% Chance pro Sekunde
+    // Händler kommen zufällig vorbei (ca. alle 10 Sekunden im Schnitt)
+    if (Math.random() < 0.1 * dt) {
       const visitors = [
-        { name: '📦 Eisenhändler', buys: ['steelCoil'], sellPriceMult: 0.9 },
-        { name: '🔧 Kupferschmied', buys: ['copperWire'], sellPriceMult: 0.85 },
-        { name: '✨ Qualitätsprüfer', buys: ['clip', 'premiumClip'], sellPriceMult: 1.0 },
-        { name: '🏭 Großhändler', buys: ['clip', 'premiumClip', 'hybridClip', 'steelCoil', 'wire', 'copperWire'], sellPriceMult: 0.95 },
+        { name: '📦 Eisenhändler', specialty: 0.9 },
+        { name: '🔧 Kupferschmied', specialty: 0.85 },
+        { name: '✨ Qualitätsprüfer', specialty: 1.0 },
+        { name: '🏭 Großhändler', specialty: 0.95 },
       ];
       
       const visitor = visitors[Math.floor(Math.random() * visitors.length)];
-      let totalTrade = 0;
+      let totalEarned = 0;
       
-      // Kaufe was im Input-Buffer ist
-      for (const res of visitor.buys) {
-        const have = mach.inputBuffer[res] || 0;
-        if (have > 0) {
-          const price = (m.prices[res] || RESOURCE_META[res]?.basePrice || 1) * visitor.sellPriceMult;
-          const toSell = Math.min(have, Math.random() * 20 + 5); // Kauft 5-25 Stück
-          const earned = toSell * price;
-          
-          if (toSell > 0.1) {
-            mach.inputBuffer[res] = (mach.inputBuffer[res] || 0) - toSell;
-            state.money += earned;
-            m.revenue += earned;
-            totalTrade += earned;
-          }
-        }
-      }
-      
-      // Verkaufe was der Händler mitbringt (in Output-Buffer)
-      for (const res of MARKETABLE) {
+      // Kaufe was im Input-Buffer ist (alles was verkaufbar ist)
+      for (const [res, qty] of Object.entries(mach.inputBuffer)) {
+        if (qty <= 0) continue;
         const meta = RESOURCE_META[res];
-        if (!meta) continue;
-        const cap = recipe.outputCapacity?.[res] || 50;
-        const current = mach.outputBuffer[res] || 0;
-        if (current < cap && Math.random() < 0.3) {
-          const buyPrice = (m.prices[res] || meta.basePrice || 1) * 1.1; // Zahlt mehr als Basis
-          const canAfford = Math.floor(state.money / buyPrice);
-          const toBuy = Math.min(canAfford, Math.random() * 10 + 2, cap - current);
-          
-          if (toBuy > 0.1) {
-            const cost = toBuy * buyPrice;
-            state.money -= cost;
-            mach.outputBuffer[res] = (mach.outputBuffer[res] || 0) + toBuy;
-            totalTrade += cost;
-          }
+        if (!meta?.sell) continue;
+        
+        const price = (m.prices[res] || meta.basePrice || 1) * visitor.specialty;
+        const toSell = Math.min(qty, Math.random() * 20 + 5);
+        const earned = toSell * price;
+        
+        if (toSell > 0.1) {
+          mach.inputBuffer[res] = Math.max(0, mach.inputBuffer[res] - toSell);
+          state.money += earned;
+          m.revenue += earned;
+          totalEarned += earned;
         }
       }
       
-      if (totalTrade > 0) {
-        logEvent(`${visitor.name} war da: +${fmtMoney(totalTrade)}`);
+      // Verkaufe Materialien ins Output-Buffer (alles was marktfähig ist)
+      for (const [res, meta] of Object.entries(RESOURCE_META)) {
+        if (!meta.market) continue; // Nur kaufbare Ressourcen
+        const current = mach.outputBuffer[res] || 0;
+        if (current >= cap) continue;
+        
+        const buyPrice = (m.prices[res] || meta.basePrice || 1) * 1.15; // Zahlt 15% mehr
+        const canAfford = state.money / buyPrice;
+        const toBuy = Math.min(canAfford, Math.random() * 15 + 3, cap - current);
+        
+        if (toBuy > 0.1) {
+          const cost = toBuy * buyPrice;
+          state.money -= cost;
+          mach.outputBuffer[res] = (mach.outputBuffer[res] || 0) + toBuy;
+        }
+      }
+      
+      if (totalEarned > 0) {
+        logEvent(`${visitor.name} war da: +${fmtMoney(totalEarned)}`);
       }
     }
     

@@ -247,9 +247,9 @@ const RECIPES = {
     id: 'marketplace', name: 'Marktplatz', tier: 1,
     desc: 'Händler kaufen und verkaufen Waren automatisch. Zuführen zum Verkaufen, Abholen für Käufe.',
     phase: 1, unlockResearch: 'marketplace', buildCost: 500,
-    inputs: {}, outputs: {}, // No production inputs/outputs
-    inputCapacity: { clip: 100, premiumClip: 50, hybridClip: 25 },
-    outputCapacity: { steelCoil: 50, wire: 200, copperWire: 100 },
+    inputs: {}, outputs: {}, // No fixed inputs/outputs - accepts all
+    inputCapacity: 1000, // Large capacity for all resources
+    outputCapacity: 1000, // Large capacity for all resources
     powerConsumption: 10,
     isMarketplace: true,
   },
