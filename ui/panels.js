@@ -1619,9 +1619,11 @@ const UI = (() => {
           <div style="display:flex;align-items:center;gap:6px;padding:8px;border-bottom:1px solid var(--border);flex-wrap:wrap">
             <span style="flex:1;min-width:90px">${meta.name}</span>
             <span style="font-size:.7rem;color:var(--text-muted);min-width:70px">${fmt(qty,0)} ${meta.unit || 'Stk'}</span>
-            <button class="btn btn-sm" style="padding:2px 6px;min-width:24px" onclick="adjustSellQty('${id}', -${halfQty})">-${halfQty}</button>
+            <button class="btn btn-sm" style="padding:2px 6px;min-width:28px" onclick="adjustSellQty('${id}', -5)">-5</button>
+            <button class="btn btn-sm" style="padding:2px 6px;min-width:24px" onclick="adjustSellQty('${id}', -1)">-1</button>
             <input type="number" id="sell-qty-${id}" min="1" max="${maxQty}" value="${halfQty}" style="width:55px;padding:2px 4px;font-size:.75rem;text-align:center">
-            <button class="btn btn-sm" style="padding:2px 6px;min-width:24px" onclick="adjustSellQty('${id}', ${halfQty})">+${halfQty}</button>
+            <button class="btn btn-sm" style="padding:2px 6px;min-width:24px" onclick="adjustSellQty('${id}', 1)">+1</button>
+            <button class="btn btn-sm" style="padding:2px 6px;min-width:28px" onclick="adjustSellQty('${id}', 5)">+5</button>
             <span style="font-size:.65rem;color:var(--accent-green)">${fmtMoney(halfQty * price)}</span>
             <button class="btn btn-sm btn-amber" data-action="cli-sell-custom" data-resource="${id}">Verkauf</button>
           </div>
