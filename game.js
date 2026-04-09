@@ -119,6 +119,7 @@ function actionRemoveMachine(machineId) {
 }
 
 function actionManualFeed(machineId, resource, qty) {
+  console.log('actionManualFeed:', machineId, resource, qty);
   const stack = getMachineStack(machineId);
   let totalMoved = 0;
   let remaining = qty;
@@ -136,12 +137,20 @@ function actionManualFeed(machineId, resource, qty) {
 }
 
 function actionManualCollect(machineId) {
+  console.log('actionManualCollect called:', machineId);
   const stack = getMachineStack(machineId);
   let anyCollected = false;
   for (const m of stack) {
     const collected = Production.manualCollect(STATE, m.id);
     if (Object.keys(collected).length > 0) anyCollected = true;
   }
+  if (!anyCollected) showNotif('Output-Buffer ist leer', 'warn');
+  else {
+    showNotif('Items abgeholt!');
+    UI.renderProduction(STATE);
+    saveGame();
+  }
+}
   if (!anyCollected) showNotif('Output-Buffer ist leer', 'warn');
   else {
     UI.renderProduction(STATE);
@@ -161,12 +170,15 @@ function actionBuyResource(resource, qty) {
 }
 
 function actionSell(resource) {
+  console.log('actionSell called:', resource);
   const qty = Math.floor(STATE.production?.warehouse?.[resource] || 0);
+  console.log('qty:', qty);
   if (qty <= 0) {
     showNotif('Nichts zum Verkaufen', 'warn');
     return;
   }
   const result = Market.sellProduct(STATE, resource, qty);
+  console.log('result:', result);
   if (result.ok) {
     const meta = RESOURCE_META[resource];
     showNotif(`${result.sold}× ${meta.name} für ${fmtMoney(result.earned)} verkauft`);
