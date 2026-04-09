@@ -39,9 +39,10 @@ const UI = (() => {
       };
     });
 
-    // Warehouse click to open sell modal
-    document.getElementById('warehouse-grid')?.addEventListener('click', (e) => {
-      if (e.target.closest('button')) return; // Don't open if clicking a button
+    // Warehouse click to open sell modal - DEBUG: NICHT ENTFERNEN
+    document.getElementById('warehouse-panel')?.addEventListener('click', (e) => {
+      console.log('Warehouse panel clicked');
+      if (e.target.closest('button')) return;
       if (typeof STATE !== 'undefined') openSellModal(STATE);
     });
   }
@@ -1603,18 +1604,19 @@ const UI = (() => {
     if (!el) return;
     
     const wh = state.production?.warehouse || {};
-    const sellable = Object.entries(RESOURCE_META).filter(([id, meta]) => meta.sell && (wh[id] || 0) > 0);
+    // Show ALL items in warehouse that have quantity > 0
+    const items = Object.entries(wh).filter(([id, qty]) => qty > 0);
     
-    if (sellable.length === 0) {
-      el.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px">Nichts zum Verkaufen</div>';
+    if (items.length === 0) {
+      el.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px">Lager ist leer</div>';
     } else {
-      el.innerHTML = sellable.map(([id, meta]) => {
-        const qty = wh[id] || 0;
+      el.innerHTML = items.map(([id, qty]) => {
+        const meta = RESOURCE_META[id] || { name: id, basePrice: 0.1 };
         const price = state.market?.prices[id] || meta.basePrice || 0.1;
         return `
           <div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--border)">
             <span style="flex:1">${meta.name}</span>
-            <span style="font-size:.75rem;color:var(--text-muted)">${fmt(qty,0)} Stk @ ${fmtMoney(price)}</span>
+            <span style="font-size:.75rem;color:var(--text-muted)">${fmt(qty,0)} ${meta.unit || 'Stk'} @ ${fmtMoney(price)}</span>
             <button class="btn btn-sm btn-amber" data-action="cli-sell-all" data-resource="${id}">Alles</button>
             <button class="btn btn-sm" data-action="cli-sell-half" data-resource="${id}">50%</button>
           </div>
