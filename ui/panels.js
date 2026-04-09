@@ -1566,7 +1566,7 @@ const UI = (() => {
   }
 
   return { 
-    build, render, renderProduction, renderBuildMenu, renderPhaseOverview, 
+    build, render, renderProduction, renderBuildMenu, renderWarehouse, renderPhaseOverview, 
     getMachineFingerprint, openMarket, closeMarket,
     openSkillTree, closeSkillTree, renderSkillTree, updateGraphFilter,
     zoomGraph, centerGraph: gCenter
