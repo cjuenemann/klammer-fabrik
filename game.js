@@ -295,6 +295,18 @@ function bootGame() {
   logEvent('📎 Willkommen bei KLAMMER FABRIK');
 }
 
+// Make functions globally available for onclick handlers
+window.actionSell = actionSell;
+window.actionBuyMachine = actionBuyMachine;
+window.actionManualFeed = actionManualFeed;
+window.actionManualCollect = actionManualCollect;
+window.actionCrankGenerator = actionCrankGenerator;
+window.actionCrankWireDrawer = actionCrankWireDrawer;
+window.actionBuyResource = actionBuyResource;
+window.actionRemoveMachine = actionRemoveMachine;
+window.actionSetPrice = actionSetPrice;
+window.actionStartResearch = actionStartResearch;
+
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') UI.closeMarket();
 });
