@@ -4,7 +4,7 @@
 
 function createInitialState() {
   return {
-    money:          100,    // enough for generator + coils
+    money:          200,    // enough for first machines before selling
     totalProduced:  0,
     totalClipsSold: 0,
     phase:          1,

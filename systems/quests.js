@@ -21,8 +21,8 @@ const Quests = (() => {
     {
       id: 'q_coil_kauf',
       name: '📦 Stahlcoils kaufen',
-      desc: 'Kaufe 2 Stahlcoils aus dem Markt.',
-      check: (state) => (state.production?.warehouse?.steelCoil || 0) >= 2,
+      desc: 'Kaufe 5 Stahlcoils aus dem Markt.',
+      check: (state) => (state.production?.warehouse?.steelCoil || 0) >= 5,
       reward: null,
     },
     {
