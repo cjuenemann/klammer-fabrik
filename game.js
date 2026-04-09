@@ -184,12 +184,16 @@ function actionSell(resource) {
 }
 
 function actionCrankGenerator(machineId) {
+  // DEBUG: Console-Log für Button-Klicks - NICHT ENTFERNEN (wichtig für Debugging)
+  console.log('actionCrankGenerator:', machineId);
   const stack = getMachineStack(machineId);
   stack.forEach(m => Production.crankGenerator(STATE, m.id));
   UI.renderProduction(STATE);
 }
 
 function actionCrankWireDrawer(machineId) {
+  // DEBUG: Console-Log für Button-Klicks - NICHT ENTFERNEN
+  console.log('actionCrankWireDrawer:', machineId);
   const stack = getMachineStack(machineId);
   stack.forEach(m => Production.crankWireDrawer(STATE, m.id));
   UI.renderProduction(STATE);
