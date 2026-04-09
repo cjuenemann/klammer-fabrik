@@ -1613,18 +1613,42 @@ const UI = (() => {
       el.innerHTML = items.map(([id, qty]) => {
         const meta = RESOURCE_META[id] || { name: id, basePrice: 0.1 };
         const price = state.market?.prices[id] || meta.basePrice || 0.1;
+        const maxQty = Math.floor(qty);
+        const halfQty = Math.max(1, Math.floor(qty / 2));
         return `
-          <div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--border)">
-            <span style="flex:1">${meta.name}</span>
-            <span style="font-size:.75rem;color:var(--text-muted)">${fmt(qty,0)} ${meta.unit || 'Stk'} @ ${fmtMoney(price)}</span>
-            <button class="btn btn-sm btn-amber" data-action="cli-sell-all" data-resource="${id}">Alles</button>
-            <button class="btn btn-sm" data-action="cli-sell-half" data-resource="${id}">50%</button>
+          <div style="display:flex;align-items:center;gap:6px;padding:8px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+            <span style="flex:1;min-width:90px">${meta.name}</span>
+            <span style="font-size:.7rem;color:var(--text-muted);min-width:70px">${fmt(qty,0)} ${meta.unit || 'Stk'}</span>
+            <button class="btn btn-sm" style="padding:2px 6px;min-width:24px" onclick="adjustSellQty('${id}', -${halfQty})">-${halfQty}</button>
+            <input type="number" id="sell-qty-${id}" min="1" max="${maxQty}" value="${halfQty}" style="width:55px;padding:2px 4px;font-size:.75rem;text-align:center">
+            <button class="btn btn-sm" style="padding:2px 6px;min-width:24px" onclick="adjustSellQty('${id}', ${halfQty})">+${halfQty}</button>
+            <span style="font-size:.65rem;color:var(--accent-green)">${fmtMoney(halfQty * price)}</span>
+            <button class="btn btn-sm btn-amber" data-action="cli-sell-custom" data-resource="${id}">Verkauf</button>
           </div>
         `;
       }).join('');
     }
     
     document.getElementById('modal-sell')?.classList.remove('hidden');
+  }
+
+  // Helper for +/- buttons
+  function adjustSellQty(id, delta) {
+    const input = document.getElementById(`sell-qty-${id}`);
+    if (!input) return;
+    const max = parseInt(input.max) || 999999;
+    let val = parseInt(input.value) || 0;
+    val = Math.max(1, Math.min(max, val + delta));
+    input.value = val;
+    // Trigger price recalc
+    const row = input.closest('div');
+    const priceSpan = row?.querySelector('span:last-of-type');
+    if (priceSpan) {
+      const qty = parseInt(input.value) || 0;
+      const resourceId = id;
+      const price = STATE.market?.prices[resourceId] || RESOURCE_META[resourceId]?.basePrice || 0.1;
+      priceSpan.textContent = fmtMoney(qty * price);
+    }
   }
 
   function closeSell() {
@@ -1655,12 +1679,29 @@ const UI = (() => {
     }
   }
 
+  function cliSellCustom(resourceId) {
+    const inputEl = document.getElementById(`sell-qty-${resourceId}`);
+    const qty = parseInt(inputEl?.value) || 0;
+    if (qty <= 0) { showNotif('Ungültige Menge', 'warn'); return; }
+    const maxQty = Math.floor(STATE.production?.warehouse?.[resourceId] || 0);
+    if (qty > maxQty) qty = maxQty;
+    const result = Market.sellProduct(STATE, resourceId, qty);
+    if (result.ok) {
+      showNotif(`${result.sold}× verkauft für ${fmtMoney(result.earned)}`);
+      renderWarehouse(STATE);
+      openSellModal(STATE);
+      saveGame();
+    } else {
+      showNotif(result.reason || 'Verkauf fehlgeschlagen', 'error');
+    }
+  }
+
   return { 
     build, render, 
     renderProduction, renderBuildMenu, renderWarehouse, renderResearch, renderQuests, renderPhaseOverview, 
     getMachineFingerprint, openMarket, closeMarket,
     openSkillTree, closeSkillTree, renderSkillTree, updateGraphFilter,
-    openCLI, closeCLI, openSellModal, closeSell, cliSellAll, cliSellHalf,
+    openCLI, closeCLI, openSellModal, closeSell, cliSellAll, cliSellHalf, cliSellCustom, adjustSellQty,
     zoomGraph, centerGraph: gCenter
   };
 })();
